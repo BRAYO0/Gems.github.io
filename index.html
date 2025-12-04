@@ -3,24 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to My Website</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      text-align: center;
-      padding-top: 100px;
-    }
-    h1 {
-      color: #333;
-    }
-    p {
-      color: #666;
-    }
-  </style>
+  <title>stream11 • Football Streams, Scores & Highlights</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>Hello, World! 👋</h1>
-  <p>Welcome to my website hosted on GitHub Pages!</p>
+  <!-- HEADER -->
+  <header class="main-header">
+    <div class="logo">
+      <h1>stream<span>11</span></h1>
+    </div>
+
+    <nav class="menu">
+      <button class="tab-btn active" data-tab="football">Football Fan</button>
+      <button class="tab-btn" data-tab="stats">Stats</button>
+      <button class="tab-btn" data-tab="highlights">Highlights</button>
+    </nav>
+  </header>
+
+  <!-- HOMEPAGE BANNER -->
+  <section class="hero-banner">
+    <div class="hero-content">
+      <h2>Watch Live Football. Anytime. Anywhere.</h2>
+      <p>Your home for official streams, live scores, and match highlights.</p>
+      <a href="#live-scores" class="hero-btn">View Live Scores</a>
+    </div>
+  </section>
+
+  <!-- LIVE SCORE CARDS -->
+  <section id="live-scores" class="scores-section">
+    <h2>Live Scores</h2>
+
+    <div class="score-grid">
+
+      <div class="score-card">
+        <div class="teams">
+          <span class="team home">Barcelona</span>
+          <span class="score">2 - 1</span>
+          <span class="team away">Real Madrid</span>
+        </div>
+        <div class="status live">LIVE • 67'</div>
+      </div>
+
+      <div class="score-card">
+        <div class="teams">
+          <span class="team home">Arsenal</span>
+          <span class="score">1 - 1</span>
+          <span class="team away">Chelsea</span>
+        </div>
+        <div class="status">FT</div>
+      </div>
+
+      <div class="score-card">
+        <div class="teams">
+          <span class="team home">Man City</span>
+          <span class="score">0 - 0</span>
+          <span class="team away">Liverpool</span>
+        </div>
+        <div class="status scheduled">20:00 GMT</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <main id="main">
+
+    <!-- FOOTBALL TAB -->
+    <section id="football" class="tab-content active">
+      <h2>Live Streams</h2>
+
+      <div class="stream-grid">
+
+        <div class="stream-card">
+          <h3>YouTube Live Stream</h3>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/live_stream?channel=UCplaceholder"
+              allowfullscreen></iframe>
+          </div>
+        </div>
+
+        <div class="stream-card">
+          <h3>Twitch Channel</h3>
+          <div class="video-wrap">
+            <iframe src="https://player.twitch.tv/?channel=channelname&parent=yourdomain.com"
+              allowfullscreen></iframe>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- STATS TAB -->
+    <section id="stats" class="tab-content">
+      <h2>Match Stats</h2>
+
+      <div class="stats-grid">
+        <div class="stats-card">
+          <h3>Match Summary</h3>
+          <table class="stats-table">
+            <tr><th>Team</th><th>Possession</th><th>Shots</th><th>On Target</th></tr>
+            <tr><td>Home</td><td>58%</td><td>12</td><td>5</td></tr>
+            <tr><td>Away</td><td>42%</td><td>8</td><td>3</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- HIGHLIGHTS TAB -->
+    <section id="highlights" class="tab-content">
+      <h2>Highlights</h2>
+
+      <div class="highlights-grid">
+        <div class="highlight-card">
+          <h3>Goal 34'</h3>
+          <video controls>
+            <source src="highlights/sample-highlight.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    © <span id="year"></span> stream11 — Football Streaming Hub
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
+
+
