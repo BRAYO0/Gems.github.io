@@ -1,72 +1,185 @@
-/* ====== General Reset ====== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* ====== Background ====== */
+/* Global */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: "Poppins", Arial, sans-serif;
-  color: white;
-  text-align: center;
-  min-height: 100vh;
-  background: url("background.png") no-repeat center center/cover;
+  font-family: 'Poppins', sans-serif;
+  background: #080f12;
+  color: #f4f4f4;
+}
+
+/* HEADER */
+.main-header {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
+  align-items: center;
+  padding: 16px 30px;
+  background: #0c191d;
+  border-bottom: 2px solid #00e676;
 }
 
-/* Optional semi-transparent overlay for readability */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: -1;
-}
-
-/* ====== Header ====== */
-header {
-  padding: 40px 20px 10px;
-}
-
-header h1 {
-  font-size: 2.5em;
-  letter-spacing: 2px;
+.logo h1 {
+  font-size: 1.8rem;
+  color: #fff;
   font-weight: 700;
-  color: #00bfff;
+}
+.logo span { color: #00e676; }
+
+.menu button {
+  margin-left: 8px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid #00e676;
+  color: #00e676;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-/* ====== Profile Section ====== */
-.profile {
-  padding: 20px;
-  max-width: 700px;
-  margin: auto;
+.menu button.active,
+.menu button:hover {
+  background: #00e676;
+  color: #0c191d;
+  font-weight: 700;
 }
 
-.profile-img {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  border: 3px solid #00bfff;
-  object-fit: cover;
-  margin-bottom: 20px;
+/* HERO BANNER */
+.hero-banner {
+  background: url("assets/banner.jpg") center/cover no-repeat,
+              linear-gradient(to bottom, #061517, #061517);
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-blend-mode: overlay;
 }
 
-.profile p {
-  font-size: 1.2em;
-  line-height: 1.6;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
+.hero-content h2 {
+  font-size: 2.5rem;
+  color: #00e676;
+  text-shadow: 0 0 15px #00e676;
+}
+.hero-content p { margin-top: 8px; font-size: 1.1rem; }
+.hero-btn {
+  margin-top: 14px;
+  display: inline-block;
+  background: #00e676;
+  color: #021010;
+  padding: 10px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
 }
 
-/* ====== Footer ====== */
-footer {
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  font-size: 0.9em;
+/* LIVE SCORES */
+.scores-section {
+  padding: 40px 30px;
+}
+
+.scores-section h2 {
+  color: #00e676;
+  margin-bottom: 18px;
+  font-size: 1.8rem;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.score-card {
+  background: #0f1f23;
+  padding: 14px;
+  border-radius: 10px;
+  border-left: 4px solid #00e676;
+}
+
+.teams {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+.team { font-weight: 600; }
+
+.score {
+  font-weight: 700;
+  color: #00e676;
+}
+
+.status {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+.live { color: #ff1744; font-weight: 700; }
+
+/* MAIN TABS */
+.tab-content { display: none; padding: 30px; }
+.tab-content.active { display: block; }
+
+h2 { margin-bottom: 10px; }
+
+/* STREAM GRID */
+.stream-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.stream-card {
+  background: #0f1f23;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #00e67633;
+}
+
+/* Video wrapper */
+.video-wrap {
+  position: relative;
+  padding-top: 56.25%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.video-wrap iframe, video {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* STATS */
+.stats-card {
+  background: #0f1f23;
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 3px solid #00e676;
+}
+
+.stats-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+.stats-table th, .stats-table td {
+  padding: 10px;
+  border-bottom: 1px solid #1f3338;
+}
+
+/* HIGHLIGHTS */
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.highlight-card {
+  background: #0f1f23;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+/* FOOTER */
+.footer {
+  margin-top: 30px;
+  padding: 15px;
+  text-align: center;
+  background: #061112;
+  border-top: 2px solid #00e676;
 }
