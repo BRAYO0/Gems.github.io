@@ -1,137 +1,182 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>stream11 • Football Streams, Scores & Highlights</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>stream11 — Live Football Streams & Highlights</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+
   <!-- HEADER -->
   <header class="main-header">
-    <div class="logo">
-      <h1>stream<span>11</span></h1>
+    <div class="left">
+      <div class="logo">
+        <img src="assets/ball.png" alt="stream11" class="logo-icon" />
+        <h1>stream<span>11</span></h1>
+      </div>
+      <button id="hamburger" class="hamburger" aria-label="Open menu">☰</button>
     </div>
 
-    <nav class="menu">
-      <button class="tab-btn active" data-tab="football">Football Fan</button>
-      <button class="tab-btn" data-tab="stats">Stats</button>
-      <button class="tab-btn" data-tab="highlights">Highlights</button>
+    <nav id="main-nav" class="nav-desktop">
+      <button class="tab-btn active" data-tab="football">⚽ Football Fan</button>
+      <button class="tab-btn" data-tab="stats">📊 Stats</button>
+      <button class="tab-btn" data-tab="highlights">🎬 Highlights</button>
+      <button id="login-btn" class="btn small">Login</button>
     </nav>
   </header>
 
-  <!-- HOMEPAGE BANNER -->
+  <!-- MOBILE MENU (hidden on desktop) -->
+  <nav id="mobile-nav" class="nav-mobile" aria-hidden="true">
+    <button class="mobile-link" data-tab="football">⚽ Football Fan</button>
+    <button class="mobile-link" data-tab="stats">📊 Stats</button>
+    <button class="mobile-link" data-tab="highlights">🎬 Highlights</button>
+    <button id="login-btn-mobile" class="btn small">Login</button>
+  </nav>
+
+  <!-- HERO -->
   <section class="hero-banner">
     <div class="hero-content">
-      <h2>Watch Live Football. Anytime. Anywhere.</h2>
-      <p>Your home for official streams, live scores, and match highlights.</p>
-      <a href="#live-scores" class="hero-btn">View Live Scores</a>
+      <h2>Watch Live Football • Real Scores • Best Highlights</h2>
+      <p>Official streams, live scoreboard, match stats and highlight reels — all in one place.</p>
+      <a class="hero-btn" href="#live-scores">View Live Scores</a>
     </div>
   </section>
 
-  <!-- LIVE SCORE CARDS -->
+  <!-- LIVE SCORES -->
   <section id="live-scores" class="scores-section">
-    <h2>Live Scores</h2>
-
-    <div class="score-grid">
-
-      <div class="score-card">
-        <div class="teams">
-          <span class="team home">Barcelona</span>
-          <span class="score">2 - 1</span>
-          <span class="team away">Real Madrid</span>
-        </div>
-        <div class="status live">LIVE • 67'</div>
+    <div class="section-head">
+      <h2>🏆 Live Scoreboard</h2>
+      <div class="score-controls">
+        <select id="league-select" title="Choose league">
+          <option value="all">All Leagues</option>
+          <option value="premier">Premier League</option>
+          <option value="laliga">La Liga</option>
+        </select>
       </div>
-
-      <div class="score-card">
-        <div class="teams">
-          <span class="team home">Arsenal</span>
-          <span class="score">1 - 1</span>
-          <span class="team away">Chelsea</span>
-        </div>
-        <div class="status">FT</div>
-      </div>
-
-      <div class="score-card">
-        <div class="teams">
-          <span class="team home">Man City</span>
-          <span class="score">0 - 0</span>
-          <span class="team away">Liverpool</span>
-        </div>
-        <div class="status scheduled">20:00 GMT</div>
-      </div>
-
     </div>
+
+    <!-- Score widget (ScoreBat free livescore widget) -->
+    <div id="scorebat-widget" class="widget">
+      <!-- ScoreBat provides a simple embed: see docs. This is their free widget approach. -->
+      <div id="scorebat-embed"></div>
+      <noscript>
+        Live scores require JavaScript. Please enable JS.
+      </noscript>
+    </div>
+
+    <!-- Fallback / API-driven live scores (populated by script) -->
+    <div id="live-cards" class="score-grid" aria-live="polite"></div>
   </section>
 
-  <!-- TABS -->
+  <!-- MAIN TABS -->
   <main id="main">
-
-    <!-- FOOTBALL TAB -->
-    <section id="football" class="tab-content active">
-      <h2>Live Streams</h2>
-
+    <!-- Football Tab -->
+    <section id="football" class="tab-content active" aria-hidden="false">
+      <h2>⚽ Live Streams</h2>
       <div class="stream-grid">
-
-        <div class="stream-card">
-          <h3>YouTube Live Stream</h3>
+        <!-- Official embed (YouTube / Twitch). Replace with official stream IDs. -->
+        <div class="stream-card smooth">
+          <h3>Official YouTube Channel</h3>
           <div class="video-wrap">
             <iframe src="https://www.youtube.com/embed/live_stream?channel=UCplaceholder"
-              allowfullscreen></iframe>
+                    title="YouTube Live" allow="autoplay; encrypted-media" allowfullscreen></iframe>
           </div>
         </div>
 
-        <div class="stream-card">
-          <h3>Twitch Channel</h3>
+        <div class="stream-card smooth">
+          <h3>Twitch (if available)</h3>
           <div class="video-wrap">
-            <iframe src="https://player.twitch.tv/?channel=channelname&parent=yourdomain.com"
-              allowfullscreen></iframe>
+            <iframe src="https://player.twitch.tv/?channel=channelname&parent=YOUR_GITHUB_PAGES_DOMAIN"
+                    allowfullscreen allow="autoplay"></iframe>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- STATS TAB -->
-    <section id="stats" class="tab-content">
-      <h2>Match Stats</h2>
-
+    <!-- Stats Tab -->
+    <section id="stats" class="tab-content" aria-hidden="true">
+      <h2>📊 Match Statistics</h2>
       <div class="stats-grid">
-        <div class="stats-card">
+        <div class="stats-card smooth" id="stats-card">
           <h3>Match Summary</h3>
-          <table class="stats-table">
-            <tr><th>Team</th><th>Possession</th><th>Shots</th><th>On Target</th></tr>
-            <tr><td>Home</td><td>58%</td><td>12</td><td>5</td></tr>
-            <tr><td>Away</td><td>42%</td><td>8</td><td>3</td></tr>
+          <table class="stats-table" id="stats-table">
+            <thead><tr><th>Team</th><th>Possession</th><th>Shots</th><th>On Target</th></tr></thead>
+            <tbody>
+              <tr><td>Home</td><td>—</td><td>—</td><td>—</td></tr>
+              <tr><td>Away</td><td>—</td><td>—</td><td>—</td></tr>
+            </tbody>
           </table>
         </div>
-      </div>
-    </section>
 
-    <!-- HIGHLIGHTS TAB -->
-    <section id="highlights" class="tab-content">
-      <h2>Highlights</h2>
-
-      <div class="highlights-grid">
-        <div class="highlight-card">
-          <h3>Goal 34'</h3>
-          <video controls>
-            <source src="highlights/sample-highlight.mp4" type="video/mp4">
-          </video>
+        <div class="teams-card smooth">
+          <h3>Clubs</h3>
+          <div class="club-list" id="club-list">
+            <!-- club icons will be injected here -->
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- Highlights Tab -->
+    <section id="highlights" class="tab-content" aria-hidden="true">
+      <h2>🎬 Highlights</h2>
+
+      <!-- Auto-play carousel -->
+      <div class="carousel" id="carousel" aria-roledescription="carousel">
+        <div class="carousel-track" id="carousel-track">
+          <!-- video slides will be injected by script -->
+        </div>
+
+        <div class="carousel-controls">
+          <button id="prev" class="control">⟨</button>
+          <button id="playpause" class="control">⏯</button>
+          <button id="next" class="control">⟩</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
-    © <span id="year"></span> stream11 — Football Streaming Hub
+    <p>© <span id="year"></span> stream11 — Respect rights. Embed only authorized streams.</p>
   </footer>
 
+  <!-- LOGIN MODAL (client-only demo) -->
+  <div id="login-modal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <button id="close-login" class="modal-close" aria-label="Close">✕</button>
+      <h3>Sign in (demo)</h3>
+      <form id="login-form" autocomplete="off">
+        <label>
+          Username
+          <input id="login-username" type="text" required />
+        </label>
+        <label>
+          Password
+          <input id="login-password" type="password" required />
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn">Sign in</button>
+          <button type="button" id="logout" class="btn ghost">Sign out</button>
+        </div>
+        <p class="modal-note">This is a client-side demo. For real auth, use a server or OAuth flow (see notes).</p>
+      </form>
+    </div>
+  </div>
+
   <script src="script.js"></script>
+
+  <!-- ScoreBat widget script (free widget) -->
+  <script>
+    // ScoreBat provides embeddable widget code; this snippet fetches their script and places the widget.
+    // Documentation: https://www.scorebat.com/video-widget/ and https://www.scorebat.com/video-api/
+    (function() {
+      var s = document.createElement('script');
+      s.src = "https://www.scorebat.com/embed/g/"; // ScoreBat free embed (no key)
+      s.async = true;
+      s.onload = function(){ /* widget loads into #scorebat-embed */ };
+      document.getElementById('scorebat-widget').appendChild(s);
+    })();
+  </script>
 </body>
 </html>
-
-
