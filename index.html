@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en" class="h-full">
- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stream11 - Live Football Streaming</title>
@@ -10,7 +10,7 @@
     body {
       box-sizing: border-box;
     }
-    
+
     * {
       margin: 0;
       padding: 0;
@@ -27,13 +27,13 @@
     /* Neon Glow Effects */
     .neon-text {
       text-shadow: 0 0 10px rgba(0, 255, 135, 0.8),
-                   0 0 20px rgba(0, 255, 135, 0.6),
-                   0 0 30px rgba(0, 255, 135, 0.4);
+        0 0 20px rgba(0, 255, 135, 0.6),
+        0 0 30px rgba(0, 255, 135, 0.4);
     }
 
     .neon-border {
       box-shadow: 0 0 15px rgba(0, 255, 135, 0.5),
-                  inset 0 0 15px rgba(0, 255, 135, 0.1);
+        inset 0 0 15px rgba(0, 255, 135, 0.1);
       border: 2px solid rgba(0, 255, 135, 0.3);
     }
 
@@ -42,14 +42,14 @@
       backdrop-filter: blur(10px);
       border: 1px solid rgba(0, 255, 135, 0.2);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                  0 0 20px rgba(0, 255, 135, 0.1);
+        0 0 20px rgba(0, 255, 135, 0.1);
       transition: all 0.3s ease;
     }
 
     .glow-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6),
-                  0 0 30px rgba(0, 255, 135, 0.3);
+        0 0 30px rgba(0, 255, 135, 0.3);
       border-color: rgba(0, 255, 135, 0.5);
     }
 
@@ -97,6 +97,7 @@
         opacity: 0;
         transform: translateY(20px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -108,9 +109,12 @@
     }
 
     @keyframes pulse {
-      0%, 100% {
+
+      0%,
+      100% {
         opacity: 1;
       }
+
       50% {
         opacity: 0.5;
       }
@@ -137,6 +141,7 @@
         opacity: 0;
         transform: translateX(100%);
       }
+
       to {
         opacity: 1;
         transform: translateX(0);
@@ -175,6 +180,7 @@
       from {
         transform: scaleX(0);
       }
+
       to {
         transform: scaleX(1);
       }
@@ -193,6 +199,7 @@
       from {
         opacity: 0;
       }
+
       to {
         opacity: 1;
       }
@@ -257,6 +264,7 @@
         transform: scale(0.9);
         opacity: 0;
       }
+
       to {
         transform: scale(1);
         opacity: 1;
@@ -294,144 +302,264 @@
       justify-content: center;
       font-size: 12px;
     }
+    
+    /* Added utility for video backgrounds in carousel */
+    .video-bg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        z-index: 0;
+        transform: translateX(-50%) translateY(-50%);
+        object-fit: cover;
+        opacity: 0.4; /* Dim the video slightly so text pops */
+    }
+    .carousel-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(10, 14, 39, 0.9) 0%, rgba(10, 14, 39, 0.2) 100%);
+        z-index: 1;
+    }
   </style>
-  <style>@view-transition { navigation: auto; }</style>
+  <style>
+    @view-transition {
+      navigation: auto;
+    }
+  </style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full">
-  <div id="app-wrapper" class="w-full h-full overflow-auto"><!-- Header -->
-   <header class="sticky top-0 z-50 backdrop-filter backdrop-blur-lg bg-opacity-90" style="background: rgba(10, 14, 39, 0.95); border-bottom: 1px solid rgba(0, 255, 135, 0.1);">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-     <div class="flex items-center justify-between"><!-- Logo -->
-      <div class="flex items-center space-x-3">
-       <div class="w-10 h-10 rounded-lg flex items-center justify-center neon-border">
-        <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#00ff87" /> <path d="M2 17L12 22L22 17" stroke="#00ff87" stroke-width="2" stroke-linecap="round" /> <path d="M2 12L12 17L22 12" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
-        </svg>
-       </div>
-       <div>
-        <h1 id="site-title" class="text-xl sm:text-2xl font-bold neon-text">Stream11</h1>
-        <p id="tagline" class="text-xs text-gray-400 desktop-only">Live Football Streaming &amp; Scores</p>
-       </div>
-      </div><!-- Desktop Navigation -->
-      <nav class="desktop-only flex items-center space-x-6"><a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Home</a> <a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Live Matches</a> <a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Highlights</a> <a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Leagues</a>
-      </nav><!-- Desktop Auth Buttons -->
-      <div class="desktop-only flex items-center space-x-3"><button onclick="openLoginModal()" class="btn-secondary">Login</button> <button onclick="openSignupModal()" class="btn-primary">Sign Up</button>
-      </div><!-- Mobile Menu Button --> <button onclick="toggleMobileMenu()" class="mobile-only p-2">
-       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" />
-       </svg></button>
-     </div>
-    </div>
-   </header><!-- Mobile Menu -->
-   <div id="mobile-menu" class="mobile-menu mobile-only fixed top-0 left-0 w-64 h-full z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl">
-    <div class="p-6"><button onclick="toggleMobileMenu()" class="mb-8 text-gray-400 hover:text-white">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" />
-      </svg></button>
-     <nav class="space-y-4"><a href="#" class="block text-lg font-medium hover:text-green-400 transition-colors">Home</a> <a href="#" class="block text-lg font-medium hover:text-green-400 transition-colors">Live Matches</a> <a href="#" class="block text-lg font-medium hover:text-green-400 transition-colors">Highlights</a> <a href="#" class="block text-lg font-medium hover:text-green-400 transition-colors">Leagues</a>
-      <div class="pt-6 space-y-3"><button onclick="openLoginModal(); toggleMobileMenu();" class="btn-secondary w-full">Login</button> <button onclick="openSignupModal(); toggleMobileMenu();" class="btn-primary w-full">Sign Up</button>
-      </div>
-     </nav>
-    </div>
-   </div><!-- Banner Section -->
-   <section class="relative overflow-hidden py-16 sm:py-24">
-    <div class="absolute inset-0 opacity-20">
-     <div class="absolute top-10 left-10 w-32 h-32 sm:w-64 sm:h-64 bg-green-500 rounded-full blur-3xl"></div>
-     <div class="absolute bottom-10 right-10 w-32 h-32 sm:w-64 sm:h-64 bg-blue-500 rounded-full blur-3xl"></div>
-    </div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-     <div class="text-center">
-      <h2 id="banner-title" class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 neon-text">Watch Live Football</h2>
-      <p id="banner-subtitle" class="text-lg sm:text-xl text-gray-300 mb-8">Stream every match in HD quality</p><button id="cta-button" onclick="openSignupModal()" class="btn-primary text-lg">Start Watching</button>
-     </div><!-- Highlight Carousel -->
-     <div class="mt-16 carousel-container glow-card">
-      <div id="carousel" class="relative" style="padding-bottom: 56.25%;">
-       <div class="carousel-slide active absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900 to-indigo-900">
-        <div class="text-center p-8">
-         <h3 class="text-2xl font-bold mb-2">⚽ Champions League Final</h3>
-         <p class="text-gray-300">Watch the epic showdown</p>
+</head>
+
+<body class="h-full">
+  <div id="app-wrapper" class="w-full h-full overflow-auto">
+    <header class="sticky top-0 z-50 backdrop-filter backdrop-blur-lg bg-opacity-90"
+      style="background: rgba(10, 14, 39, 0.95); border-bottom: 1px solid rgba(0, 255, 135, 0.1);">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center neon-border">
+              <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#00ff87" />
+                <path d="M2 17L12 22L22 17" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
+                <path d="M2 12L12 17L22 12" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div>
+              <h1 id="site-title" class="text-xl sm:text-2xl font-bold neon-text">Stream11</h1>
+              <p id="tagline" class="text-xs text-gray-400 desktop-only">Live Football Streaming &amp; Scores</p>
+            </div>
+          </div>
+          <nav class="desktop-only flex items-center space-x-6">
+              <a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Home</a>
+              <a href="#live-section" class="text-sm font-medium hover:text-green-400 transition-colors">Live Matches</a>
+              <a href="#highlights-section" class="text-sm font-medium hover:text-green-400 transition-colors">Highlights</a>
+              <a href="#leagues-section" class="text-sm font-medium hover:text-green-400 transition-colors">Leagues</a>
+              <a href="#stats" class="text-sm font-medium hover:text-green-400 transition-colors">Stats</a>
+              <a href="#fan-zone" class="text-sm font-medium hover:text-green-400 transition-colors">Fan Zone</a>
+          </nav>
+          <div class="desktop-only flex items-center space-x-3"><button onclick="openLoginModal()"
+              class="btn-secondary">Login</button> <button onclick="openSignupModal()" class="btn-primary">Sign Up</button>
+          </div><button onclick="toggleMobileMenu()" class="mobile-only p-2">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg></button>
         </div>
-       </div>
-       <div class="carousel-slide absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-900 to-orange-900">
-        <div class="text-center p-8">
-         <h3 class="text-2xl font-bold mb-2">🏆 Premier League Highlights</h3>
-         <p class="text-gray-300">Best goals of the week</p>
+      </div>
+    </header>
+    <div id="mobile-menu"
+      class="mobile-menu mobile-only fixed top-0 left-0 w-64 h-full z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl">
+      <div class="p-6"><button onclick="toggleMobileMenu()" class="mb-8 text-gray-400 hover:text-white">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 18L18 6M6 6l12 12" />
+          </svg></button>
+        <nav class="space-y-4">
+            <a href="#" class="block text-lg font-medium hover:text-green-400 transition-colors">Home</a>
+            <a href="#live-section" class="block text-lg font-medium hover:text-green-400 transition-colors">Live Matches</a>
+            <a href="#highlights-section" class="block text-lg font-medium hover:text-green-400 transition-colors">Highlights</a>
+            <a href="#leagues-section" class="block text-lg font-medium hover:text-green-400 transition-colors">Leagues</a>
+            <a href="#stats" class="block text-lg font-medium hover:text-green-400 transition-colors">Stats</a>
+            <a href="#fan-zone" class="block text-lg font-medium hover:text-green-400 transition-colors">Fan Zone</a>
+          <div class="pt-6 space-y-3"><button onclick="openLoginModal(); toggleMobileMenu();"
+              class="btn-secondary w-full">Login</button> <button onclick="openSignupModal(); toggleMobileMenu();"
+              class="btn-primary w-full">Sign Up</button>
+          </div>
+        </nav>
+      </div>
+    </div>
+    
+    <section class="relative overflow-hidden py-16 sm:py-24">
+      <div class="absolute inset-0 opacity-20">
+        <div class="absolute top-10 left-10 w-32 h-32 sm:w-64 sm:h-64 bg-green-500 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-10 right-10 w-32 h-32 sm:w-64 sm:h-64 bg-blue-500 rounded-full blur-3xl"></div>
+      </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center">
+          <h2 id="banner-title" class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 neon-text">Watch Live Football</h2>
+          <p id="banner-subtitle" class="text-lg sm:text-xl text-gray-300 mb-8">Stream every match in HD quality</p>
+          <button id="cta-button" onclick="openSignupModal()" class="btn-primary text-lg">Start Watching</button>
         </div>
-       </div>
-       <div class="carousel-slide absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-900 to-teal-900">
-        <div class="text-center p-8">
-         <h3 class="text-2xl font-bold mb-2">⭐ La Liga Action</h3>
-         <p class="text-gray-300">Don't miss the excitement</p>
+
+        <div id="highlights-section" class="mt-16 carousel-container glow-card overflow-hidden relative">
+          <div id="carousel" class="relative h-96 sm:h-[500px]">
+            
+            <div class="carousel-slide active absolute inset-0">
+                 <video class="video-bg" autoplay muted loop playsinline>
+                    <source src="https://assets.mixkit.co/videos/preview/mixkit-soccer-player-kicking-the-ball-in-the-stadium-2091-large.mp4" type="video/mp4">
+                </video>
+                <div class="carousel-overlay"></div>
+                <div class="relative z-10 h-full flex items-end justify-center pb-12">
+                    <div class="text-center p-6 bg-black bg-opacity-40 backdrop-blur-md rounded-xl border border-green-500/30 mx-4">
+                        <h3 class="text-2xl font-bold mb-2 neon-text">⚽ Champions League Final</h3>
+                        <p class="text-gray-300">Watch the epic showdown highlights in 4K</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-slide absolute inset-0">
+                <video class="video-bg" autoplay muted loop playsinline>
+                    <source src="https://assets.mixkit.co/videos/preview/mixkit-tech-background-with-a-futuristic-interface-and-a-hologram-32685-large.mp4" type="video/mp4">
+                </video>
+                <div class="carousel-overlay"></div>
+                 <div class="relative z-10 h-full flex items-end justify-center pb-12">
+                    <div class="text-center p-6 bg-black bg-opacity-40 backdrop-blur-md rounded-xl border border-green-500/30 mx-4">
+                        <h3 class="text-2xl font-bold mb-2 neon-text">🏆 Premier League Highlights</h3>
+                        <p class="text-gray-300">Best goals and skills of the week</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-slide absolute inset-0">
+                 <video class="video-bg" autoplay muted loop playsinline>
+                    <source src="https://assets.mixkit.co/videos/preview/mixkit-empty-soccer-stadium-during-the-day-42657-large.mp4" type="video/mp4">
+                </video>
+                <div class="carousel-overlay"></div>
+                 <div class="relative z-10 h-full flex items-end justify-center pb-12">
+                    <div class="text-center p-6 bg-black bg-opacity-40 backdrop-blur-md rounded-xl border border-green-500/30 mx-4">
+                        <h3 class="text-2xl font-bold mb-2 neon-text">⭐ La Liga Action</h3>
+                        <p class="text-gray-300">Don't miss the excitement and drama</p>
+                    </div>
+                </div>
+            </div>
+
+          </div>
+          <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
+            <button onclick="setCarouselSlide(0)" class="w-3 h-3 rounded-full bg-green-500 carousel-dot transition-all"></button>
+            <button onclick="setCarouselSlide(1)" class="w-3 h-3 rounded-full bg-gray-600 carousel-dot transition-all"></button>
+            <button onclick="setCarouselSlide(2)" class="w-3 h-3 rounded-full bg-gray-600 carousel-dot transition-all"></button>
+          </div>
         </div>
-       </div>
       </div>
-      <div class="flex justify-center space-x-2 py-4"><button onclick="setCarouselSlide(0)" class="w-2 h-2 rounded-full bg-green-500 carousel-dot"></button> <button onclick="setCarouselSlide(1)" class="w-2 h-2 rounded-full bg-gray-600 carousel-dot"></button> <button onclick="setCarouselSlide(2)" class="w-2 h-2 rounded-full bg-gray-600 carousel-dot"></button>
+    </section>
+    
+    <section id="live-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div class="flex space-x-1 border-b border-gray-700 overflow-x-auto"><button onclick="switchTab('live')"
+          class="tab-button active" data-tab="live">🔴 Live Now</button> <button onclick="switchTab('today')"
+          class="tab-button" data-tab="today">📅 Today</button> <button onclick="switchTab('upcoming')"
+          class="tab-button" data-tab="upcoming">🔜 Upcoming</button> <button onclick="switchTab('results')"
+          class="tab-button" data-tab="results">✅ Results</button>
       </div>
-     </div>
-    </div>
-   </section><!-- Tabs Section -->
-   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex space-x-1 border-b border-gray-700 overflow-x-auto"><button onclick="switchTab('live')" class="tab-button active" data-tab="live">🔴 Live Now</button> <button onclick="switchTab('today')" class="tab-button" data-tab="today">📅 Today</button> <button onclick="switchTab('upcoming')" class="tab-button" data-tab="upcoming">🔜 Upcoming</button> <button onclick="switchTab('results')" class="tab-button" data-tab="results">✅ Results</button>
-    </div>
-   </section><!-- Live Scores Section -->
-   <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-    <div id="live-tab" class="tab-content active">
-     <div id="live-scores" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><!-- Live scores will be loaded here -->
-     </div>
-    </div>
-    <div id="today-tab" class="tab-content">
-     <div class="text-center py-12 text-gray-400">
-      <p>Today's matches will appear here</p>
-     </div>
-    </div>
-    <div id="upcoming-tab" class="tab-content">
-     <div class="text-center py-12 text-gray-400">
-      <p>Upcoming matches will appear here</p>
-     </div>
-    </div>
-    <div id="results-tab" class="tab-content">
-     <div class="text-center py-12 text-gray-400">
-      <p>Match results will appear here</p>
-     </div>
-    </div>
-   </section><!-- Login Modal -->
-   <div id="login-modal" class="modal">
-    <div class="modal-content">
-     <div class="flex justify-between items-center mb-6">
-      <h3 class="text-2xl font-bold neon-text">Login</h3><button onclick="closeModal('login-modal')" class="text-gray-400 hover:text-white">
-       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" />
-       </svg></button>
-     </div>
-     <form onsubmit="handleLogin(event)">
-      <div class="space-y-4">
-       <div><label for="login-email" class="block text-sm font-medium mb-2">Email</label> <input type="email" id="login-email" required placeholder="your@email.com">
-       </div>
-       <div><label for="login-password" class="block text-sm font-medium mb-2">Password</label> <input type="password" id="login-password" required placeholder="••••••••">
-       </div><button type="submit" class="btn-primary w-full">Login</button>
+    </section>
+    
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10">
+      <div id="live-tab" class="tab-content active">
+        <div id="live-scores" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          </div>
       </div>
-     </form>
-    </div>
-   </div><!-- Signup Modal -->
-   <div id="signup-modal" class="modal">
-    <div class="modal-content">
-     <div class="flex justify-between items-center mb-6">
-      <h3 class="text-2xl font-bold neon-text">Sign Up</h3><button onclick="closeModal('signup-modal')" class="text-gray-400 hover:text-white">
-       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12" />
-       </svg></button>
-     </div>
-     <form onsubmit="handleSignup(event)">
-      <div class="space-y-4">
-       <div><label for="signup-name" class="block text-sm font-medium mb-2">Full Name</label> <input type="text" id="signup-name" required placeholder="John Doe">
-       </div>
-       <div><label for="signup-email" class="block text-sm font-medium mb-2">Email</label> <input type="email" id="signup-email" required placeholder="your@email.com">
-       </div>
-       <div><label for="signup-password" class="block text-sm font-medium mb-2">Password</label> <input type="password" id="signup-password" required placeholder="••••••••">
-       </div><button type="submit" class="btn-primary w-full">Create Account</button>
+      <div id="today-tab" class="tab-content">
+        <div class="text-center py-12 text-gray-400 glow-card rounded-lg">
+          <p>Today's matches will appear here</p>
+        </div>
       </div>
-     </form>
+      <div id="upcoming-tab" class="tab-content">
+        <div class="text-center py-12 text-gray-400 glow-card rounded-lg">
+          <p>Upcoming matches will appear here</p>
+        </div>
+      </div>
+      <div id="results-tab" class="tab-content">
+        <div class="text-center py-12 text-gray-400 glow-card rounded-lg">
+          <p>Match results will appear here</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="leagues-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800">
+        <h2 class="text-3xl font-bold mb-8 neon-text">Popular Leagues</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇬🇧</span><p class="mt-2 font-medium">Premier League</p></div>
+            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇪🇸</span><p class="mt-2 font-medium">La Liga</p></div>
+            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇮🇹</span><p class="mt-2 font-medium">Serie A</p></div>
+            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇩🇪</span><p class="mt-2 font-medium">Bundesliga</p></div>
+        </div>
+    </section>
+
+    <section id="stats" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800">
+        <h2 class="text-3xl font-bold mb-8 neon-text">Season Stats</h2>
+        <div class="glow-card p-8 rounded-lg text-center text-gray-400">
+            <svg class="w-16 h-16 mx-auto mb-4 text-green-500 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+            <p class="text-xl">Detailed statistics coming soon.</p>
+        </div>
+    </section>
+
+    <section id="fan-zone" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800 mb-16">
+        <h2 class="text-3xl font-bold mb-8 neon-text">Fan Zone</h2>
+        <div class="glow-card p-8 rounded-lg text-center text-gray-400">
+             <svg class="w-16 h-16 mx-auto mb-4 text-blue-500 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <p class="text-xl">Join the community discussion soon.</p>
+            <button class="btn-primary mt-6">Join Waitlist</button>
+        </div>
+    </section>
+    
+    <div id="login-modal" class="modal">
+      <div class="modal-content">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold neon-text">Login</h3><button onclick="closeModal('login-modal')"
+            class="text-gray-400 hover:text-white">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg></button>
+        </div>
+        <form onsubmit="handleLogin(event)">
+          <div class="space-y-4">
+            <div><label for="login-email" class="block text-sm font-medium mb-2">Email</label> <input type="email"
+                id="login-email" required placeholder="your@email.com">
+            </div>
+            <div><label for="login-password" class="block text-sm font-medium mb-2">Password</label> <input
+                type="password" id="login-password" required placeholder="••••••••">
+            </div><button type="submit" class="btn-primary w-full">Login</button>
+          </div>
+        </form>
+      </div>
     </div>
-   </div><!-- Success Message -->
-   <div id="success-toast" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2000;" class="glow-card px-6 py-4 rounded-lg">
-    <p id="success-message" class="text-green-400 font-medium"></p>
-   </div>
+    <div id="signup-modal" class="modal">
+      <div class="modal-content">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold neon-text">Sign Up</h3><button onclick="closeModal('signup-modal')"
+            class="text-gray-400 hover:text-white">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg></button>
+        </div>
+        <form onsubmit="handleSignup(event)">
+          <div class="space-y-4">
+            <div><label for="signup-name" class="block text-sm font-medium mb-2">Full Name</label> <input type="text"
+                id="signup-name" required placeholder="John Doe">
+            </div>
+            <div><label for="signup-email" class="block text-sm font-medium mb-2">Email</label> <input type="email"
+                id="signup-email" required placeholder="your@email.com">
+            </div>
+            <div><label for="signup-password" class="block text-sm font-medium mb-2">Password</label> <input
+                type="password" id="signup-password" required placeholder="••••••••">
+            </div><button type="submit" class="btn-primary w-full">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="success-toast" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2000;"
+      class="glow-card px-6 py-4 rounded-lg">
+      <p id="success-message" class="text-green-400 font-medium"></p>
+    </div>
   </div>
   <script>
     const defaultConfig = {
@@ -549,7 +677,7 @@
           homeTeam: { name: 'Manchester United', crest: '🔴' },
           awayTeam: { name: 'Liverpool', crest: '🔴' },
           score: { fullTime: { home: 2, away: 2 } },
-          competition: { name: 'Premier League', emblem: '🏴󐁧󐁢󐁥󐁮󐁧󐁿' },
+          competition: { name: 'Premier League', emblem: '🇬🇧' },
           status: 'LIVE',
           minute: 67
         },
@@ -589,7 +717,7 @@
           homeTeam: { name: 'Chelsea', crest: '🔵' },
           awayTeam: { name: 'Arsenal', crest: '🔴' },
           score: { fullTime: { home: 0, away: 2 } },
-          competition: { name: 'Premier League', emblem: '🏴󐁧󐁢󐁥󐁮󐁧󐁿' },
+          competition: { name: 'Premier League', emblem: '🇬🇧' },
           status: 'LIVE',
           minute: 89
         }
@@ -693,5 +821,5 @@
     // Refresh scores every 30 seconds
     setInterval(loadDemoScores, 30000);
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ac0ea6df3d65bc4',t:'MTc2NTQxMzQ3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
