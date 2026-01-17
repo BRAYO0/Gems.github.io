@@ -107,129 +107,283 @@ function handleSignup(e) {
    ======================================== */
 
 // Demo scores fallback (from Set 2)
-function loadDemoScores() {
-  const demoMatches = [
-    {
-      homeTeam: {
-        name: 'Man Utd',
-        crest: '🔴'
-      },
-      awayTeam: {
-        name: 'Liverpool',
-        crest: '🔵'
-      },
-      score: {
-        fullTime: {
-          home: 2,
-          away: 2
-        }
-      },
-      competition: {
-        name: 'Premier League',
-        emblem: '🏴'
-      },
-      status: 'LIVE',
-      minute: 67
-    },
-    {
-      homeTeam: {
-        name: 'Real Madrid',
-        crest: '⚪'
-      },
-      awayTeam: {
-        name: 'Barcelona',
-        crest: '🔵'
-      },
-      score: {
-        fullTime: {
-          home: 1,
-          away: 3
-        }
-      },
-      competition: {
-        name: 'La Liga',
-        emblem: '🇪🇸'
-      },
-      status: 'LIVE',
-      minute: 78
+// Fetch matches from external API
+// Fetch matches from external API
+async function fetchMatches(isUpdate = false) {
+  window.isUpdating = isUpdate; // Store state for filter function
+  const container = document.getElementById('live-scores');
+  if (container && !isUpdate) { // Only show loader on initial load
+    container.innerHTML = '<div class="placeholder-text"><div class="loader"></div> Loading matches...</div>';
+  }
+
+  try {
+    // Fetch both APIs in parallel
+    // API 1: Fixtures
+    const p1 = fetch('https://match-fetch.netlify.app/matches').then(r => r.ok ? r.json() : []).catch(() => []);
+
+    // API 2: Live Scores
+    const p2 = fetch('https://streamxi-score.noelbaraza254.workers.dev/matches', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 13; M2006C3LG Build/TQ3A.230901.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.5414.123 Mobile Safari/537.36'
+      }
+    }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+    const [scheduleData, scoreDataResponse] = await Promise.all([p1, p2]);
+
+    if (!scheduleData || scheduleData.length === 0) {
+      throw new Error('No schedule data available');
     }
-  ];
-  displayScores(demoMatches);
+
+    // Prepare lookup for live scores
+    const scoreLookup = {};
+    if (scoreDataResponse) {
+      const matchesList = Array.isArray(scoreDataResponse) ? scoreDataResponse : (scoreDataResponse.matches || []);
+      matchesList.forEach(m => {
+        const mid = String(m.match_id || m.id || '');
+        scoreLookup[mid] = m;
+      });
+    }
+
+    // Merge Data
+    const matches = scheduleData.map(match => {
+      const matchId = String(match.id || '');
+      let liveMatch = {};
+      if (scoreLookup[matchId]) {
+        liveMatch = scoreLookup[matchId];
+      }
+
+      return {
+        ...match,
+        home_score: liveMatch.home_score || '-',
+        away_score: liveMatch.away_score || '-',
+        time_period: liveMatch.time_period || match.time || 'Upcoming',
+        home_team: match.home_team,
+        away_team: match.away_team,
+        competition_logo: match.competition_logo,
+        competition: match.competition,
+        kickoffDate: (() => {
+          // Strictly use Date and Time from API 1 (match-fetch) as requested
+          let k = null;
+          if (match.date && match.time) {
+            const cleanTime = match.time.replace(/[^0-9:]/g, '');
+            k = `${match.date}T${cleanTime}:00Z`;
+          }
+          // Fallback to match.kickoff if present and valid (still from API 1)
+          else if (match.kickoff) {
+            k = match.kickoff;
+            if (!k.endsWith('Z') && !k.includes('+') && !k.includes('-')) {
+              k += 'Z';
+            }
+          }
+          return k ? new Date(k) : null;
+        })()
+      };
+    });
+
+    // Initial filter call
+    filterAndDisplayMatches();
+  } catch (error) {
+    console.error('Error fetching matches:', error);
+    if (container) {
+      container.innerHTML = '<div class="placeholder-text">Unable to load matches at this time.</div>';
+    }
+  }
 }
 
-function displayScores(matches) {
-  const container = document.getElementById('live-scores'); // Targeting 'live-scores' from Set 2's structure
+let currentFilter = 'all';
+
+function switchTab(name) {
+  currentFilter = name;
+  document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  filterAndDisplayMatches();
+}
+
+function filterAndDisplayMatches() {
+  const now = new Date();
+  // 2.5 hours in milliseconds
+  const DURATION_MS = 2.5 * 60 * 60 * 1000;
+
+  const getMatchCategory = (m) => {
+    const status = m.time_period || '';
+
+    // 1. Explicit API Status Overrides
+    if (status === 'FT' || status === 'Full time' || status === 'Finished') {
+      return 'finished';
+    }
+    if (status.includes("'") || status.includes("Live") || status.includes("Half") || status.includes("HT")) {
+      return 'live';
+    }
+
+    // 2. Fallback Time Logic (if status is just time/upcoming/empty)
+    if (!m.kickoffDate) return 'upcoming';
+    const diff = now - m.kickoffDate;
+
+    if (diff > DURATION_MS) return 'finished';
+    if (diff >= 0) return 'live';
+    return 'upcoming';
+  };
+
+  let filtered = [];
+
+  if (currentFilter === 'all') {
+    filtered = allMatches;
+  } else {
+    filtered = allMatches.filter(m => getMatchCategory(m) === currentFilter);
+  }
+
+  // If this is an update and we found matches, try silent update
+  if (window.isUpdating && filtered.length > 0) {
+    updateVisibleMatches(filtered);
+  } else {
+    displayMatches(filtered);
+  }
+}
+
+function updateVisibleMatches(matches) {
+  const container = document.getElementById('live-scores');
   if (!container) return;
 
-  if (!matches || !matches.length) {
-    container.innerHTML = '<div class="placeholder-text">No live matches</div>';
+  // If the number of matches changed significantly (e.g. filter change or new day), 
+  // or if the container is empty/error, force full redraw
+  if (container.children.length === 0 || container.querySelector('.placeholder-text')) {
+    displayMatches(matches);
+    return;
+  }
+
+  matches.forEach(match => {
+    const matchId = match.id || match.match_id;
+    if (!matchId) return;
+
+    const card = document.getElementById(`match-${matchId}`);
+    if (card) {
+      // Update Status
+      const statusEl = card.querySelector('.match-status');
+      const scoreHomeEl = card.querySelector('.score-home');
+      const scoreAwayEl = card.querySelector('.score-away');
+      const liveDot = card.querySelector('.live-indicator');
+
+      // Calculate current status text & live state
+      let statusText = match.time_period || 'Upcoming';
+      let isLive = false;
+      const liveKeywords = ["'", "Live", "Half"];
+      if (liveKeywords.some(k => statusText.includes(k))) isLive = true;
+      if (statusText === "Full time") { statusText = "FT"; isLive = false; }
+
+      // Time logic fallback if needed
+      if (!statusText || statusText === 'Upcoming' || statusText.includes(':')) {
+        // Re-run time logic if simple time update needed (no API override)
+        let kickoffTime = match.kickoffDate; // Already calculated object
+        if (kickoffTime && !isNaN(kickoffTime.getTime())) {
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          statusText = kickoffTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: userTimezone });
+        }
+      }
+
+      // Apply updates
+      if (statusEl && statusEl.textContent !== statusText) statusEl.textContent = statusText;
+      if (scoreHomeEl) scoreHomeEl.textContent = match.home_score || '-';
+      if (scoreAwayEl) scoreAwayEl.textContent = match.away_score || '-';
+
+      if (liveDot) {
+        liveDot.style.display = isLive ? 'inline-block' : 'none';
+      }
+    }
+  });
+}
+
+function displayMatches(matches) {
+  const container = document.getElementById('live-scores');
+  if (!container) return;
+
+  if (!matches || matches.length === 0) {
+    container.innerHTML = '<div class="placeholder-text">No matches scheduled for today</div>';
     return;
   }
 
   container.innerHTML = '';
+
   matches.forEach(match => {
-    const homeScore = match.score?.fullTime?.home ?? 0;
-    const awayScore = match.score?.fullTime?.away ?? 0;
-    const minute = match.minute || '';
-    const league = match.competition?.name || 'Football';
-    const leagueIcon = match.competition?.emblem || '⚽';
+    // Parse data from StreamXI API
+    const homeScore = match.home_score ?? '-';
+    const awayScore = match.away_score ?? '-';
+
+    // Status logic
+    let statusText = match.time_period || 'Upcoming';
+    let isLive = false;
+
+    // Check for live keywords in time_period
+    const liveKeywords = ["'", "Live", "Half"];
+    if (liveKeywords.some(k => statusText.includes(k))) {
+      isLive = true;
+    }
+
+    if (statusText === "Full time") {
+      statusText = "FT";
+      isLive = false;
+    }
+
+    // Fallback for empty status or if it's just a time string (implying upcoming)
+    // We prioritize the local formatted time.
+    if (!statusText || statusText === 'Upcoming' || statusText.includes(':')) {
+      let kickoffTime = match.kickoff;
+
+      // If no kickoff but we have date and time from API 1
+      if (!kickoffTime && match.date && match.time) {
+        // Assume API time is UTC. Format: YYYY-MM-DDTHH:MM:00Z
+        const cleanTime = match.time.replace(/[^0-9:]/g, '');
+        kickoffTime = `${match.date}T${cleanTime}:00Z`;
+      } else if (kickoffTime) {
+        // Force UTC on existing kickoff if needed
+        if (!kickoffTime.endsWith('Z') && !kickoffTime.includes('+') && !kickoffTime.includes('-')) {
+          kickoffTime += 'Z';
+        }
+      }
+
+      if (kickoffTime) {
+        const date = new Date(kickoffTime);
+        if (!isNaN(date.getTime())) {
+          // Get user's timezone exactly as requested
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          statusText = date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: userTimezone
+          });
+        }
+      }
+    }
+
+    // Fix for API 1 structure (nested objects)
+    const homeName = match.home_team?.name || match.home_team || 'Home Team';
+    const awayName = match.away_team?.name || match.away_team || 'Away Team';
+
+    const homeLogo = match.home_team?.logo || match.home_logo || 'assets/teams/default.png';
+    const awayLogo = match.away_team?.logo || match.away_logo || 'assets/teams/default.png';
+    const compLogo = match.competition_logo || '';
+    const matchId = match.id || match.match_id || Math.random().toString(36).substr(2, 9);
+
     const card = document.createElement('div');
     card.className = 'score-card';
+    card.id = `match-${matchId}`;
 
-    // Using the detailed HTML structure from Set 2
     card.innerHTML = `
       <div class="flex-row" style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="left" style="display:flex; align-items:center;"><span class="league-icon">${leagueIcon}</span><span class="muted">${league}</span></div>
-        <div class="right"><span class="live-indicator" style="background:#ff3c3c;width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px"></span><span class="muted">LIVE ${minute}'</span></div>
+        <div class="left" style="display:flex; align-items:center;">
+            ${compLogo ? `<img src="${compLogo}" class="league-icon" style="background:white;border-radius:50%;padding:2px;" alt="">` : '<span class="league-icon">⚽</span>'}
+            <span class="muted">${match.competition}</span>
+        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center">
+          <img src="${awayLogo}" style="width:24px;height:24px;object-fit:contain;margin-right:8px;" alt="">
+            <span>${awayName}</span>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:var(--accent)">${awayScore}</div>
       </div>
-      <div style="margin-top:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center"><div><span style="font-size:18px">${match.homeTeam.crest||'⚽'}</span><span style="margin-left:8px">${match.homeTeam.name}</span></div><div style="font-size:26px;font-weight:700;color:var(--accent)">${homeScore}</div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><div><span style="font-size:18px">${match.awayTeam.crest||'⚽'}</span><span style="margin-left:8px">${match.awayTeam.name}</span></div><div style="font-size:26px;font-weight:700;color:var(--accent)">${awayScore}</div></div>
-      </div>
-      <button class="cta" style="width:100%;margin-top:12px">Watch Live</button>
+      </div >
+      <button class="cta" style="width:100%;margin-top:12px">Watch Stream</button>
     `;
     container.appendChild(card);
   });
-}
-
-// Proxy fetch to Netlify function (from Set 2)
-async function loadLivesFromProxy() {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    const url = '/.netlify/functions/live-scores?type=eventsday&date=' + today;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Proxy fetch failed');
-    const data = await res.json();
-    const events = data?.events || [];
-    if (!events.length) return loadDemoScores();
-    // Map TheSportsDB events shape to our display
-    const mapped = events.map(ev => ({
-      homeTeam: {
-        name: ev.strHomeTeam,
-        crest: ''
-      },
-      awayTeam: {
-        name: ev.strAwayTeam,
-        crest: ''
-      },
-      score: {
-        fullTime: {
-          home: ev.intHomeScore,
-          away: ev.intAwayScore
-        }
-      },
-      competition: {
-        name: ev.strLeague,
-        emblem: ''
-      },
-      status: ev.strStatus,
-      minute: ev.intTime
-    }));
-    displayScores(mapped);
-  } catch (err) {
-    console.warn(err);
-    loadDemoScores();
-  }
 }
 
 /* ========================================
@@ -262,7 +416,7 @@ function injectClubs() {
   clubs.forEach(c => {
     const el = document.createElement('div');
     el.className = 'club-item';
-    el.innerHTML = `<img src="${c.img}" alt="${c.name} logo"/><div>${c.name}</div>`;
+    el.innerHTML = `< img src = "${c.img}" alt = "${c.name} logo" /> <div>${c.name}</div>`;
     list.appendChild(el);
   });
 }
@@ -284,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // When a tab is set, attempt to load scores if it's the live/score tab
     // (Note: Assumes 'football' or a primary score tab is used)
     if (name === 'football' || name === 'live') {
-      loadLivesFromProxy();
+      fetchMatches();
     }
   }
 
@@ -369,16 +523,16 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
   let currentSlide = 0;
   let autoplay = true;
-  
+
   // Rebuild slides if carouselTrack exists
   if (carouselTrack) {
     highlights.forEach((h, i) => {
       const slide = document.createElement("div");
       slide.className = "slide";
       slide.dataset.index = i;
-      slide.innerHTML = `<video preload="metadata" controls playsinline muted>
-                           <source src="${h.file}" type="video/mp4">
-                         </video>`;
+      slide.innerHTML = `< video preload = "metadata" controls playsinline muted >
+      <source src="${h.file}" type="video/mp4">
+      </video>`;
       carouselTrack.appendChild(slide);
     });
 
@@ -387,7 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function goToSlideLocal(idx) {
       if (!slides.length) return;
       currentSlide = (idx + slides.length) % slides.length;
-      carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+      carouselTrack.style.transform = `translateX(-${currentSlide * 100} %)`;
       slides.forEach((s, i) => {
         const v = s.querySelector("video");
         if (!v) return;
@@ -419,5 +573,5 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Live scores: initial load ---
-  loadLivesFromProxy();
+  fetchMatches();
 });
