@@ -216,9 +216,16 @@
                                 headers: rawUrl.headers
                             };
                             const jsonStr = JSON.stringify(config);
-                            // simple btoa might fail on unicode, but usually headers are ascii.
-                            // encoding: config -> json -> base64 -> url-encoded
-                            const b64Data = encodeURIComponent(btoa(jsonStr));
+                            // Robust Base64 encoding (Unicode-safe)
+                            // Handles all characters including emojis and special symbols
+                            const safeB64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g,
+                                function toSolidBytes(match, p1) {
+                                    return String.fromCharCode('0x' + p1);
+                                }));
+
+                            // URL Encode the Base64 to preserve + and / logic
+                            const b64Data = encodeURIComponent(safeB64);
+
                             // Append .m3u8 to help players trigger HLS mode
                             const proxyUrl = `https://match-fetch.netlify.app/restream?data=${b64Data}&.m3u8`;
 

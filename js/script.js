@@ -151,6 +151,35 @@ async function fetchMatches(isUpdate = false) {
         competition: match.competition,
         kickoffDate: kickoffDate
       };
+    }).sort((a, b) => {
+      // Priority: Live (1) -> Upcoming (2) -> Finished (3)
+      const getRank = (m) => {
+        const time = m.time_period || '';
+        const isLive = ["'", "Live", "Half"].some(k => time.includes(k));
+        const isFinished = time === 'FT' || time === 'Full time' || time === 'Finished';
+        if (isLive) return 1;
+        if (isFinished) return 3;
+        return 2; // Upcoming
+      };
+
+      const rankA = getRank(a);
+      const rankB = getRank(b);
+
+      if (rankA !== rankB) return rankA - rankB;
+
+      // Secondary sorting by date
+      const dateA = a.kickoffDate ? new Date(a.kickoffDate) : new Date(0);
+      const dateB = b.kickoffDate ? new Date(b.kickoffDate) : new Date(0);
+
+      if (rankA === 2) { // Upcoming: Soonest first (Ascending)
+        return dateA - dateB;
+      }
+      if (rankA === 3) { // Finished: Most recent first (Descending)
+        return dateB - dateA;
+      }
+      // Live: Recently started first (Descending time)? Or standard schedule order (Ascending)?
+      // Usually standard schedule order is better for lists.
+      return dateA - dateB;
     });
 
     // Compare with cache and update only if changed
@@ -175,6 +204,8 @@ async function fetchMatches(isUpdate = false) {
     if (!cachedMatches && container) {
       container.innerHTML = '<div class="placeholder-text">Unable to load matches at this time.</div>';
     }
+  } finally {
+    window.isUpdating = false;
   }
 }
 
@@ -200,13 +231,27 @@ function filterAndDisplayMatches() {
     filtered = window.allMatches || [];
   } else {
     filtered = (window.allMatches || []).filter(m => getMatchCategory(m) === currentFilter);
+
+    // Explicitly sort specific tabs to match "closer to start" / "recent" logic
+    filtered.sort((a, b) => {
+      const dateA = a.kickoffDate ? new Date(a.kickoffDate) : new Date(0);
+      const dateB = b.kickoffDate ? new Date(b.kickoffDate) : new Date(0);
+
+      if (currentFilter === 'upcoming') {
+        return dateA - dateB; // Ascending (Soonest first)
+      }
+      if (currentFilter === 'finished') {
+        return dateB - dateA; // Descending (Recent first)
+      }
+      if (currentFilter === 'live') {
+        return dateB - dateA; // Descending (Just started/Newest first) - "Closer to start time" logic
+      }
+      return 0;
+    });
   }
 
-  if (window.isUpdating && filtered.length > 0) {
-    updateVisibleMatches(filtered);
-  } else {
-    displayMatches(filtered);
-  }
+  // Always full render on filter change or initial load to ensure correct cards are shown/hidden
+  displayMatches(filtered);
 }
 
 function updateVisibleMatches(matches) {
