@@ -7,7 +7,7 @@
     <title>Stream11 - Player</title>
     <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
     <script type="text/javascript"
-        src="//cdn.jsdelivr.net/gh/ewwink/clappr-quality-selector-plugin@latest/quality-selector.js"></script>
+        src="https://cdn.jsdelivr.net/gh/ewwink/clappr-quality-selector-plugin@latest/quality-selector.js"></script>
     <link rel="icon" type="image/png" href="assets/images/app_icon.png">
     <link href="https://api.fontshare.com/v2/css?f[]=chillax@400&display=swap" rel="stylesheet">
     <script>
@@ -207,6 +207,33 @@
             function parseStreamData(rawUrl) {
                 // Handle object format (from new API)
                 if (typeof rawUrl === 'object' && rawUrl.url) {
+                    // Check if headers are present (requires proxy for Restricted headers like Referer/Origin)
+                    // We check if headers exist and act as a trigger
+                    if (rawUrl.headers && Object.keys(rawUrl.headers).length > 0) {
+                        try {
+                            const config = {
+                                url: rawUrl.url,
+                                headers: rawUrl.headers
+                            };
+                            const jsonStr = JSON.stringify(config);
+                            // simple btoa might fail on unicode, but usually headers are ascii.
+                            // encoding: config -> json -> base64 -> url-encoded
+                            const b64Data = encodeURIComponent(btoa(jsonStr));
+                            // Append .m3u8 to help players trigger HLS mode
+                            const proxyUrl = `https://match-fetch.netlify.app/restream?data=${b64Data}&.m3u8`;
+
+                            return {
+                                videoUrl: proxyUrl,
+                                mimeType: 'application/x-mpegURL',
+                                customHeaders: {} // Headers are handled by the proxy, clear them for the player
+                            };
+                        } catch (e) {
+                            console.error("Error encoding proxy data:", e);
+                            console.error("Failed JSON:", JSON.stringify(config));
+                        }
+                    } else {
+                        console.log("No headers found in stream object, using direct URL.");
+                    }
                     return { videoUrl: rawUrl.url, customHeaders: rawUrl.headers || {} };
                 }
 
@@ -246,7 +273,7 @@
                 }
 
                 const rawUrl = streams[index];
-                const { videoUrl, customHeaders } = parseStreamData(rawUrl);
+                const { videoUrl, customHeaders, mimeType } = parseStreamData(rawUrl);
 
                 console.log(`Loading Stream ${index + 1}:`, videoUrl);
                 console.log("Headers:", customHeaders);
@@ -256,17 +283,18 @@
 
                 player = new Clappr.Player({
                     source: videoUrl,
+                    mimeType: mimeType, // explicitly set mimeType if available (crucial for proxy URLs)
                     parentId: "#player",
                     width: '100%',
                     height: '100%',
                     autoPlay: true,
-                    plugins: [QualitySelector],
-                    qualitySelectorConfig: {
+                    plugins: (typeof QualitySelector !== 'undefined' ? [QualitySelector] : []),
+                    qualitySelectorConfig: (typeof QualitySelector !== 'undefined' ? {
                         title: 'Quality',
                         labelCallback: function (playbackLevel, customLabel) {
                             return playbackLevel.level.height + 'p';
                         }
-                    },
+                    } : {}),
                     // Disable click-to-play on mobile
                     clickToPlay: !isMobile,
                     mediaControl: {
