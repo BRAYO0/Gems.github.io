@@ -122,11 +122,7 @@ async function fetchMatches(isUpdate = false) {
     const p1 = fetch('https://match-fetch.netlify.app/matches').then(r => r.ok ? r.json() : []).catch(() => []);
 
     // API 2: Live Scores
-    const p2 = fetch('https://streamxi-score.noelbaraza254.workers.dev/matches', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 13; M2006C3LG Build/TQ3A.230901.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.5414.123 Mobile Safari/537.36'
-      }
-    }).then(r => r.ok ? r.json() : null).catch(() => null);
+    const p2 = fetch('https://match-fetch.netlify.app/scores').then(r => r.ok ? r.json() : null).catch(() => null);
 
     const [scheduleData, scoreDataResponse] = await Promise.all([p1, p2]);
 
@@ -134,29 +130,62 @@ async function fetchMatches(isUpdate = false) {
       throw new Error('No schedule data available');
     }
 
-    // Prepare lookup for live scores
+    // Prepare lookup for live scores (ID and Name based)
     const scoreLookup = {};
+    const scoreLookupByName = {}; // Fallback
+
     if (scoreDataResponse) {
       const matchesList = Array.isArray(scoreDataResponse) ? scoreDataResponse : (scoreDataResponse.matches || []);
       matchesList.forEach(m => {
+        // ID Map
         const mid = String(m.match_id || m.id || '');
-        scoreLookup[mid] = m;
+        if (mid) scoreLookup[mid] = m;
+
+        // Name Map (Normalization: lowercase, remove special chars)
+        const homeName = m.home?.name || m.home_team || '';
+        if (homeName) {
+          const simpleName = homeName.toLowerCase().replace(/[^a-z0-9]/g, '');
+          scoreLookupByName[simpleName] = m;
+        }
       });
     }
 
-    // Merge Data
+    // Merge & Store Data
     const matches = scheduleData.map(match => {
-      const matchId = String(match.id || '');
-      let liveMatch = {};
-      if (scoreLookup[matchId]) {
-        liveMatch = scoreLookup[matchId];
+      // 1. Try ID Match
+      const stableId = String(match.id || match.match_id || ((match.home_team?.name || 'h') + (match.away_team?.name || 'a')).replace(/[^a-zA-Z0-9]/g, ''));
+      let liveMatch = scoreLookup[stableId] || scoreLookup[String(match.id || '')];
+
+      // 2. Fallback to Name Match if ID match failed
+      if (!liveMatch) {
+        const hName = match.home_team?.name || match.home_team || '';
+        if (hName) {
+          const simpleHName = hName.toLowerCase().replace(/[^a-z0-9]/g, '');
+          liveMatch = scoreLookupByName[simpleHName];
+        }
       }
+
+      // Default to empty if still not found
+      liveMatch = liveMatch || {};
+
+      // Adapt new structure to internal format
+      // New: liveMatch.home.score, liveMatch.status
+      // Fallback: Use existing match data or defaults
+      const homeScore = liveMatch.home?.score ?? match.home_score ?? '-';
+      const awayScore = liveMatch.away?.score ?? match.away_score ?? '-';
+      // Normalize 'Not started' to null so it falls back to time/upcoming logic
+      let statusRaw = liveMatch.status || liveMatch.time_period;
+      if (statusRaw === 'Not started') statusRaw = null;
+
+      const internalStatus = statusRaw || match.time || 'Upcoming';
 
       return {
         ...match,
-        home_score: liveMatch.home_score || '-',
-        away_score: liveMatch.away_score || '-',
-        time_period: liveMatch.time_period || match.time || 'Upcoming',
+        id: stableId,
+        home_score: homeScore,
+        away_score: awayScore,
+        time_period: internalStatus,
+        // Keep original metadata
         home_team: match.home_team,
         away_team: match.away_team,
         competition_logo: match.competition_logo,
@@ -167,9 +196,7 @@ async function fetchMatches(isUpdate = false) {
           if (match.date && match.time) {
             const cleanTime = match.time.replace(/[^0-9:]/g, '');
             k = `${match.date}T${cleanTime}:00Z`;
-          }
-          // Fallback to match.kickoff if present and valid (still from API 1)
-          else if (match.kickoff) {
+          } else if (match.kickoff) {
             k = match.kickoff;
             if (!k.endsWith('Z') && !k.includes('+') && !k.includes('-')) {
               k += 'Z';
