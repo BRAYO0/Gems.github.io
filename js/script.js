@@ -72,10 +72,19 @@ function handleSignup(e) {
 async function fetchMatches(isUpdate = false) {
   window.isUpdating = isUpdate;
   const container = document.getElementById('live-scores');
-  if (container && !isUpdate) {
+
+  // Cache-first: Check cache and display immediately (only if container exists)
+  const cachedMatches = CacheManager.get('live_matches');
+  if (cachedMatches && !isUpdate && container) {
+    // Display cached data instantly
+    window.allMatches = cachedMatches;
+    filterAndDisplayMatches();
+  } else if (!isUpdate && container) {
+    // No cache, show loader
     container.innerHTML = '<div class="placeholder-text"><div class="loader"></div> Loading matches...</div>';
   }
 
+  // Fetch fresh data in background
   try {
     const [matchesData, scoresData] = await Promise.all([
       fetch(API_ENDPOINTS.matches).then(r => r.ok ? r.json() : []),
@@ -143,12 +152,26 @@ async function fetchMatches(isUpdate = false) {
       };
     });
 
-    window.allMatches = mergedMatches;
-    filterAndDisplayMatches();
+    // Compare with cache and update only if changed
+    if (cachedMatches && isUpdate) {
+      const changes = CacheManager.diff(cachedMatches, mergedMatches);
+      if (changes && (changes.added.length || changes.removed.length || changes.updated.length)) {
+        // Apply incremental updates
+        applyMatchChanges(changes);
+        window.allMatches = mergedMatches;
+        CacheManager.set('live_matches', mergedMatches, CacheManager.TTL.MATCHES);
+      }
+      // If no changes, do nothing (no DOM updates)
+    } else {
+      // First load or no cache, display all
+      window.allMatches = mergedMatches;
+      filterAndDisplayMatches();
+      CacheManager.set('live_matches', mergedMatches, CacheManager.TTL.MATCHES);
+    }
 
   } catch (error) {
     console.error('Error fetching matches:', error);
-    if (container) {
+    if (!cachedMatches && container) {
       container.innerHTML = '<div class="placeholder-text">Unable to load matches at this time.</div>';
     }
   }
@@ -235,6 +258,69 @@ function updateVisibleMatches(matches) {
       if (liveDot) liveDot.style.display = isLive ? 'inline-block' : 'none';
     }
   });
+}
+
+function applyMatchChanges(changes) {
+  const container = document.getElementById('live-scores');
+  if (!container) return;
+
+  // Handle removed matches
+  changes.removed.forEach(match => {
+    const card = document.getElementById(`match-${match.id}`);
+    if (card) {
+      card.style.transition = 'opacity 0.3s';
+      card.style.opacity = '0';
+      setTimeout(() => card.remove(), 300);
+    }
+  });
+
+  // Handle updated matches (just update the existing cards)
+  changes.updated.forEach(({ old: oldMatch, new: newMatch }) => {
+    const matchId = newMatch.id || newMatch.match_id;
+    if (!matchId) return;
+
+    const card = document.getElementById(`match-${matchId}`);
+    if (card) {
+      const statusEl = card.querySelector('.match-status');
+      const scoreHomeEl = card.querySelector('.score-home');
+      const scoreAwayEl = card.querySelector('.score-away');
+      const liveDot = card.querySelector('.live-indicator');
+
+      let statusText = newMatch.time_period || 'Upcoming';
+      let isLive = false;
+      const liveKeywords = ["'", "Live", "Half"];
+      if (liveKeywords.some(k => statusText.includes(k))) isLive = true;
+      if (statusText === "Full time") { statusText = "FT"; isLive = false; }
+
+      if (!statusText || statusText === 'Upcoming' || statusText.includes(':')) {
+        let kickoffTime = newMatch.kickoffDate;
+        if (kickoffTime && !isNaN(kickoffTime.getTime())) {
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          statusText = kickoffTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: userTimezone });
+        }
+      }
+
+      if (statusEl && statusEl.textContent !== statusText) statusEl.textContent = statusText;
+      if (scoreHomeEl) {
+        scoreHomeEl.textContent = newMatch.home_score ?? '-';
+        if (isLive || statusText === 'FT') {
+          scoreHomeEl.classList.remove('hidden');
+          if (scoreAwayEl) {
+            scoreAwayEl.textContent = newMatch.away_score ?? '-';
+            scoreAwayEl.classList.remove('hidden');
+          }
+          const vsText = card.querySelector('.vs-text');
+          if (vsText) vsText.textContent = '-';
+        }
+      }
+      if (liveDot) liveDot.style.display = isLive ? 'inline-block' : 'none';
+    }
+  });
+
+  // Handle added matches - just trigger a re-filter to add them
+  if (changes.added.length > 0) {
+    filterAndDisplayMatches();
+  }
 }
 
 function displayMatches(matches) {
@@ -324,33 +410,69 @@ function displayMatches(matches) {
 
 async function fetchHighlights() {
   const container = document.getElementById('highlights-grid');
-  if (!container) return;
 
+  // Cache-first: Check cache and display immediately (only if container exists)
+  const cachedHighlights = CacheManager.get('highlights');
+  if (cachedHighlights && container) {
+    // Display cached data instantly
+    window.allHighlights = cachedHighlights;
+    displayHighlights(cachedHighlights);
+  }
+
+  // Fetch fresh data in background
   try {
     const response = await fetch(API_ENDPOINTS.highlights);
     if (!response.ok) throw new Error('Failed to fetch highlights');
 
     const data = await response.json();
     const highlights = data.data || [];
-    window.allHighlights = highlights;
 
-    if (highlights.length === 0) {
-      container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">No highlights available at the moment.</div>';
-      return;
+    // Compare with cache and update only if changed
+    if (cachedHighlights) {
+      const changes = CacheManager.diff(cachedHighlights, highlights);
+      if (changes && (changes.added.length || changes.removed.length || changes.updated.length)) {
+        // Update cache and re-display
+        window.allHighlights = highlights;
+        displayHighlights(highlights);
+        CacheManager.set('highlights', highlights, CacheManager.TTL.HIGHLIGHTS);
+      }
+      // If no changes, do nothing
+    } else {
+      // First load, display and cache
+      window.allHighlights = highlights;
+      displayHighlights(highlights);
+      CacheManager.set('highlights', highlights, CacheManager.TTL.HIGHLIGHTS);
     }
 
-    container.innerHTML = '';
-    highlights.forEach((match, index) => {
-      match.id = match.id || match.match_id || `hl_${index}`;
-      const card = document.createElement('div');
-      card.className = 'glow-card rounded-lg overflow-hidden flex flex-col h-full';
+  } catch (error) {
+    console.error('Error loading highlights:', error);
+    if (!cachedHighlights && container) {
+      container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Failed to load highlights.</div>';
+    }
+  }
+}
 
-      const homeName = match.home.name;
-      const awayName = match.away.name;
-      const homeLogo = match.home.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=random&color=fff&size=128`;
-      const awayLogo = match.away.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=random&color=fff&size=128`;
+function displayHighlights(highlights) {
+  const container = document.getElementById('highlights-grid');
+  if (!container) return; // Can't display without container
 
-      card.innerHTML = `
+  if (highlights.length === 0) {
+    container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">No highlights available at the moment.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  highlights.forEach((match, index) => {
+    match.id = match.id || match.match_id || `hl_${index}`;
+    const card = document.createElement('div');
+    card.className = 'glow-card rounded-lg overflow-hidden flex flex-col h-full';
+
+    const homeName = match.home.name;
+    const awayName = match.away.name;
+    const homeLogo = match.home.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=random&color=fff&size=128`;
+    const awayLogo = match.away.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=random&color=fff&size=128`;
+
+    card.innerHTML = `
         <div class="p-6 flex-grow flex flex-col justify-between">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
@@ -388,13 +510,8 @@ async function fetchHighlights() {
           </button>
         </div>
       `;
-      container.appendChild(card);
-    });
-
-  } catch (error) {
-    console.error('Error loading highlights:', error);
-    container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Failed to load highlights.</div>';
-  }
+    container.appendChild(card);
+  });
 }
 
 /* ========================================
@@ -415,14 +532,35 @@ function initApp() {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // Anti-bot: Delay content loading by 1000ms
+  // Check for cached highlights and display immediately
+  const highlightsContainer = document.getElementById('highlights-grid');
+  if (highlightsContainer) {
+    const cachedHighlights = CacheManager.get('highlights');
+    if (cachedHighlights) {
+      window.allHighlights = cachedHighlights;
+      displayHighlights(cachedHighlights);
+    }
+  }
+
+  // Check for cached matches and display immediately
+  const matchesContainer = document.getElementById('live-scores');
+  if (matchesContainer) {
+    const cachedMatches = CacheManager.get('live_matches');
+    if (cachedMatches) {
+      window.allMatches = cachedMatches;
+      filterAndDisplayMatches();
+    } else {
+      // No cache, show loader
+      matchesContainer.innerHTML = '<div class="placeholder-text"><div class="loader"></div> Loading matches...</div>';
+    }
+  }
+
+  // Anti-bot: Delay fresh data fetching by 1000ms
   setTimeout(() => {
     fetchHighlights();
   }, 1000);
 
-  const matchesContainer = document.getElementById('live-scores');
   if (matchesContainer) {
-    // Anti-bot: Delay content loading by 1000ms
     setTimeout(() => {
       fetchMatches();
       setInterval(() => fetchMatches(true), 10000);
