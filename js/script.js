@@ -9,6 +9,14 @@ const defaultConfig = {
    UI Helpers
    ======================================== */
 
+// Anti-bot: Obfuscated API endpoints (base64 encoded)
+const API_ENDPOINTS = {
+  matches: atob('aHR0cHM6Ly9tYXRjaC1mZXRjaC5uZXRsaWZ5LmFwcC9tYXRjaGVz'),
+  scores: atob('aHR0cHM6Ly9tYXRjaC1mZXRjaC5uZXRsaWZ5LmFwcC9zY29yZXM='),
+  match: atob('aHR0cHM6Ly9tYXRjaC1mZXRjaC5uZXRsaWZ5LmFwcC9tYXRjaC8='),
+  highlights: atob('aHR0cHM6Ly9seWZlMDUuZ2l0aHViLmlvL2hpZ2hsaWdodC1hcGkvbWF0Y2hlcy5qc29u')
+};
+
 function showToast(msg) {
   const t = document.getElementById('success-toast');
   if (!t) return;
@@ -70,8 +78,8 @@ async function fetchMatches(isUpdate = false) {
 
   try {
     const [matchesData, scoresData] = await Promise.all([
-      fetch('https://match-fetch.netlify.app/matches').then(r => r.ok ? r.json() : []),
-      fetch('https://match-fetch.netlify.app/scores').then(r => r.ok ? r.json() : [])
+      fetch(API_ENDPOINTS.matches).then(r => r.ok ? r.json() : []),
+      fetch(API_ENDPOINTS.scores).then(r => r.ok ? r.json() : [])
     ]).catch(e => {
       console.error("Fetch error:", e);
       return [[], []];
@@ -319,7 +327,7 @@ async function fetchHighlights() {
   if (!container) return;
 
   try {
-    const response = await fetch('https://lyfe05.github.io/highlight-api/matches.json');
+    const response = await fetch(API_ENDPOINTS.highlights);
     if (!response.ok) throw new Error('Failed to fetch highlights');
 
     const data = await response.json();
@@ -407,12 +415,18 @@ function initApp() {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  fetchHighlights();
+  // Anti-bot: Delay content loading by 1000ms
+  setTimeout(() => {
+    fetchHighlights();
+  }, 1000);
 
   const matchesContainer = document.getElementById('live-scores');
   if (matchesContainer) {
-    fetchMatches();
-    setInterval(() => fetchMatches(true), 10000);
+    // Anti-bot: Delay content loading by 1000ms
+    setTimeout(() => {
+      fetchMatches();
+      setInterval(() => fetchMatches(true), 10000);
+    }, 1000);
   }
 }
 
@@ -468,7 +482,7 @@ window.handleWatchClick = async function (id) {
   // 3. Try fetching live streams (Fixtures)
   try {
     document.body.style.cursor = 'wait';
-    const response = await fetch(`https://match-fetch.netlify.app/match/${id}`);
+    const response = await fetch(`${API_ENDPOINTS.match}${id}`);
     if (!response.ok) throw new Error('Fetch failed');
     const data = await response.json();
     if (data.streams && data.streams.length > 0) {
