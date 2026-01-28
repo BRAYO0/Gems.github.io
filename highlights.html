@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream11 - Football Highlights</title>
+    <script src="/_sdk/element_sdk.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="app_icon.png">
+    <link href="https://api.fontshare.com/v2/css?f[]=chillax@400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Chillax', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Neon Glow Effects */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 255, 135, 0.8),
+                0 0 20px rgba(0, 255, 135, 0.6),
+                0 0 30px rgba(0, 255, 135, 0.4);
+        }
+
+        .neon-border {
+            box-shadow: 0 0 15px rgba(0, 255, 135, 0.5),
+                inset 0 0 15px rgba(0, 255, 135, 0.1);
+            border: 2px solid rgba(0, 255, 135, 0.3);
+        }
+
+        .glow-card {
+            background: rgba(26, 31, 58, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 135, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(0, 255, 135, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glow-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6),
+                0 0 30px rgba(0, 255, 135, 0.3);
+            border-color: rgba(0, 255, 135, 0.5);
+        }
+
+        /* Smooth Button Animations */
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff87 0%, #00d66f 100%);
+            color: #0a0e27;
+            font-weight: 600;
+            padding: 12px 32px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 255, 135, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 255, 135, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-weight: 500;
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(0, 255, 135, 0.5);
+        }
+
+        /* Tabs */
+        .tab-button {
+            position: relative;
+            padding: 12px 24px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            color: #00ff87;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0a0e27 100%);
+            padding: 32px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 40px rgba(0, 255, 135, 0.3);
+            border: 1px solid rgba(0, 255, 135, 0.2);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ffffff;
+        }
+    </style>
+    <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+
+<body class="h-full">
+    <div id="app-wrapper" class="w-full h-full overflow-auto">
+        <script>
+            // Pretty URL for highlights page
+            if (window.location.pathname.endsWith('highlights.html')) {
+                const prettyUrl = window.location.pathname.replace('highlights.html', 'highlights');
+                history.replaceState(null, '', prettyUrl);
+            }
+        </script>
+        <div data-component="header"></div>
+        <main class="pt-4 pb-12">
+            <div data-component="highlights"></div>
+        </main>
+        <div data-component="footer"></div>
+        <div data-component="modals"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    <!-- Components -->
+    <script src="components_js/header.js"></script>
+    <script src="components_js/highlights.js"></script>
+    <script src="components_js/footer.js"></script>
+    <script src="components_js/modals.js"></script>
+    <!-- Main Logic -->
+    <script src="script.js"></script>
+</body>
+
+</html>

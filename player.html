@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
     <script type="text/javascript"
         src="//cdn.jsdelivr.net/gh/ewwink/clappr-quality-selector-plugin@latest/quality-selector.js"></script>
+    <link rel="icon" type="image/png" href="app_icon.png">
+    <link href="https://api.fontshare.com/v2/css?f[]=chillax@400&display=swap" rel="stylesheet">
     <style>
         body,
         html {
@@ -17,7 +19,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
-            font-family: sans-serif;
+            font-family: 'Chillax', sans-serif;
         }
 
         #player {
@@ -79,11 +81,33 @@
             border-color: #00ff87;
             font-weight: bold;
         }
+
+        @media (max-width: 768px) {
+            .back-btn {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+
+            .stream-switcher {
+                top: 60px;
+                left: 20px;
+                right: auto;
+                flex-wrap: wrap;
+                max-width: 200px;
+            }
+
+            .stream-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <a href="index.html" class="back-btn">← Back to Home</a>
+    <a href="index.html"
+        onclick="if(document.referrer) { event.preventDefault(); window.history.back(); } else { window.location.href='index.html'; }"
+        class="back-btn">← Back</a>
 
     <div id="switcher" class="stream-switcher" style="display: none;"></div>
 
@@ -94,26 +118,68 @@
             const params = new URLSearchParams(window.location.search);
             const urlParam = params.get('url');
             const streamsParam = params.get('streams');
+            const watchParam = params.get('watch');
 
             let streams = [];
             let player = null;
+            let matchTitle = "Stream11 Player";
+            let returnPath = "index.html";
 
-            // Initialize streams array
-            if (streamsParam) {
+            // 1. Try reading from sessionStorage (Priority - Obfuscated)
+            const storedMatch = sessionStorage.getItem('active_match');
+            if (storedMatch) {
                 try {
-                    streams = JSON.parse(streamsParam);
+                    const data = JSON.parse(storedMatch);
+                    streams = data.streams || [];
+                    matchTitle = data.title || matchTitle;
+                    returnPath = data.returnTo || returnPath;
+
+                    // Update Title
+                    document.title = `Stream11 - Watching ${matchTitle}`;
+
+                    // Visual Obfuscation: Change URL in address bar to something pretty
+                    // Note: We use the title for the slug. 
+                    // To prevent relative path breakage, we only change the filename if not on file://
+                    if (window.location.protocol !== 'file:') {
+                        const slug = matchTitle.replace(/\s+/g, '-');
+                        // Use a relative-looking path that doesn't actually change depth if possible, 
+                        // or just accept the depth change and fix the back button.
+                        history.replaceState(null, '', `highlight/${slug}`);
+                    }
+
                 } catch (e) {
-                    console.error("Failed to parse streams:", e);
+                    console.error("Failed to parse stored match:", e);
                 }
             }
 
-            // Fallback to single URL if no streams array
-            if (streams.length === 0 && urlParam) {
-                streams.push(urlParam);
+            // Update Back Button
+            const backBtn = document.querySelector('.back-btn');
+            if (backBtn) {
+                backBtn.href = returnPath;
+                // If we are in a 'Pretty URL' subfolder, we need to adjust the relative link 
+                // OR just use window.location.href = returnPath
+                backBtn.onclick = (e) => {
+                    e.preventDefault();
+                    window.location.href = returnPath;
+                };
+            }
+
+            // 2. Fallback to URL parameters (Legacy/Direct links)
+            if (streams.length === 0) {
+                if (streamsParam) {
+                    try {
+                        streams = JSON.parse(streamsParam);
+                    } catch (e) {
+                        console.error("Failed to parse streams param:", e);
+                    }
+                }
+                if (streams.length === 0 && urlParam) {
+                    streams.push(urlParam);
+                }
             }
 
             if (streams.length === 0) {
-                document.body.innerHTML = '<div style="color:white;text-align:center;padding-top:20%;">No stream URL provided.</div>';
+                document.body.innerHTML = '<div style="color:white;text-align:center;padding-top:20%;">No stream provided. <br><br><a href="index.html" style="color:#00ff87">Return Home</a></div>';
                 return;
             }
 

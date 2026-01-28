@@ -7,6 +7,8 @@
   <title>Stream11 - Live Football Streaming</title>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/png" href="app_icon.png">
+  <link href="https://api.fontshare.com/v2/css?f[]=chillax@400&display=swap" rel="stylesheet">
   <style>
     body {
       box-sizing: border-box;
@@ -19,7 +21,7 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Chillax', sans-serif;
       background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
       color: #ffffff;
       overflow-x: hidden;
@@ -121,33 +123,6 @@
       }
     }
 
-    /* Carousel */
-    .carousel-container {
-      position: relative;
-      overflow: hidden;
-      border-radius: 16px;
-    }
-
-    .carousel-slide {
-      display: none;
-      animation: slideIn 0.5s ease;
-    }
-
-    .carousel-slide.active {
-      display: block;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(100%);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
 
     /* Tabs */
     .tab-button {
@@ -303,29 +278,6 @@
       justify-content: center;
       font-size: 12px;
     }
-
-    /* Added utility for video backgrounds in carousel */
-    .video-bg {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      min-width: 100%;
-      min-height: 100%;
-      width: auto;
-      height: auto;
-      z-index: 0;
-      transform: translateX(-50%) translateY(-50%);
-      object-fit: cover;
-      opacity: 0.4;
-      /* Dim the video slightly so text pops */
-    }
-
-    .carousel-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(10, 14, 39, 0.9) 0%, rgba(10, 14, 39, 0.2) 100%);
-      z-index: 1;
-    }
   </style>
   <style>
     @view-transition {
@@ -337,191 +289,28 @@
 
 <body class="h-full">
   <div id="app-wrapper" class="w-full h-full overflow-auto">
-    <header class="sticky top-0 z-50 backdrop-filter backdrop-blur-lg bg-opacity-90"
-      style="background: rgba(10, 14, 39, 0.95); border-bottom: 1px solid rgba(0, 255, 135, 0.1);">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center neon-border">
-              <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#00ff87" />
-                <path d="M2 17L12 22L22 17" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
-                <path d="M2 12L12 17L22 17" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
-              </svg>
-            </div>
-            <div>
-              <h1 id="site-title" class="text-xl sm:text-2xl font-bold neon-text">Stream11</h1>
-              <p id="tagline" class="text-xs text-gray-400 hidden md:block">Live Football Streaming &amp; Scores</p>
-            </div>
-          </div>
-
-          <!-- Desktop Nav -->
-          <nav class="hidden md:flex items-center space-x-6">
-            <a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Home</a>
-            <a href="#live-section" class="text-sm font-medium hover:text-green-400 transition-colors">Live Matches</a>
-            <a href="#highlights-section"
-              class="text-sm font-medium hover:text-green-400 transition-colors">Highlights</a>
-            <a href="#leagues-section" class="text-sm font-medium hover:text-green-400 transition-colors">Leagues</a>
-          </nav>
-
-          <!-- Desktop Auth -->
-          <div class="hidden md:flex items-center space-x-3">
-            <button onclick="openLoginModal()" class="btn-secondary">Login</button>
-            <button onclick="openSignupModal()" class="btn-secondary">Sign Up</button>
-          </div>
-
-          <!-- Mobile Hamburger -->
-          <button id="mobile-menu-btn" onclick="toggleMobileMenu()"
-            class="md:hidden p-2 text-gray-300 hover:text-white">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Mobile Menu Drawer -->
-    <div id="mobile-menu"
-      class="hidden fixed top-0 left-0 w-full h-full z-40 bg-gray-900/95 backdrop-blur-xl pt-20 px-6 transition-transform duration-300">
-      <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 p-2 text-gray-400 hover:text-white">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-      <nav class="space-y-6 flex flex-col items-center text-center mt-10">
-        <a href="#" onclick="toggleMobileMenu()"
-          class="text-2xl font-medium hover:text-green-400 transition-colors">Home</a>
-        <a href="#live-section" onclick="toggleMobileMenu()"
-          class="text-2xl font-medium hover:text-green-400 transition-colors">Live Matches</a>
-        <a href="#highlights-section" onclick="toggleMobileMenu()"
-          class="text-2xl font-medium hover:text-green-400 transition-colors">Highlights</a>
-        <a href="#leagues-section" onclick="toggleMobileMenu()"
-          class="text-2xl font-medium hover:text-green-400 transition-colors">Leagues</a>
-
-        <div class="pt-8 w-full space-y-4 max-w-xs">
-          <button onclick="openLoginModal(); toggleMobileMenu();"
-            class="btn-secondary w-full py-3 text-lg">Login</button>
-          <button onclick="openSignupModal(); toggleMobileMenu();" class="btn-secondary w-full py-3 text-lg">Sign
-            Up</button>
-        </div>
-      </nav>
-    </div>
-
-    <section class="relative overflow-hidden py-16 sm:py-24">
-      <div class="absolute inset-0 opacity-20">
-        <div class="absolute top-10 left-10 w-32 h-32 sm:w-64 sm:h-64 bg-green-500 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-10 right-10 w-32 h-32 sm:w-64 sm:h-64 bg-blue-500 rounded-full blur-3xl"></div>
-      </div>
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center">
-          <h2 id="banner-title" class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 neon-text">Watch Live Football
-          </h2>
-          <p id="banner-subtitle" class="text-lg sm:text-xl text-gray-300 mb-8">Stream every match in HD quality</p>
-          <button id="cta-button" onclick="openSignupModal()" class="btn-primary text-lg">Start Watching</button>
-        </div>
-
-        <section id="highlights-section" class="mt-16 relative z-10">
-          <h2 class="text-3xl font-bold mb-8 neon-text">Latest Highlights</h2>
-          <div id="highlights-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-12">
-              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p class="text-gray-400">Loading highlights...</p>
-            </div>
-          </div>
-        </section>
-
-        <section id="live-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-          <div class="flex w-full gap-2 p-1 bg-gray-900/50 rounded-full">
-            <button onclick="switchTab('all')" class="tab-button flex-1 rounded-full active" data-tab="all">All</button>
-            <button onclick="switchTab('live')" class="tab-button flex-1 rounded-full" data-tab="live">🔴 Live</button>
-            <button onclick="switchTab('upcoming')" class="tab-button flex-1 rounded-full" data-tab="upcoming">🔜
-              Upcoming</button>
-            <button onclick="switchTab('finished')" class="tab-button flex-1 rounded-full" data-tab="finished">✅
-              Finished</button>
-          </div>
-        </section>
-
-        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10">
-          <div id="matches-container" class="tab-content active">
-            <div id="live-scores" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
-          </div>
-        </section>
-
-        <section id="leagues-section"
-          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800">
-          <h2 class="text-3xl font-bold mb-8 neon-text">Popular Leagues</h2>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇬🇧</span>
-              <p class="mt-2 font-medium">Premier League</p>
-            </div>
-            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇪🇸</span>
-              <p class="mt-2 font-medium">La Liga</p>
-            </div>
-            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇮🇹</span>
-              <p class="mt-2 font-medium">Serie A</p>
-            </div>
-            <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇩🇪</span>
-              <p class="mt-2 font-medium">Bundesliga</p>
-            </div>
-          </div>
-        </section>
-
-
-
-        <div id="login-modal" class="modal">
-          <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-2xl font-bold neon-text">Login</h3><button onclick="closeModal('login-modal')"
-                class="text-gray-400 hover:text-white">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg></button>
-            </div>
-            <form onsubmit="handleLogin(event)">
-              <div class="space-y-4">
-                <div><label for="login-email" class="block text-sm font-medium mb-2">Email</label> <input type="email"
-                    id="login-email" required placeholder="your@email.com">
-                </div>
-                <div><label for="login-password" class="block text-sm font-medium mb-2">Password</label> <input
-                    type="password" id="login-password" required placeholder="••••••••">
-                </div><button type="submit" class="btn-primary w-full">Login</button>
-              </div>
-            </form>
-          </div>
-        </div>
-        <div id="signup-modal" class="modal">
-          <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-2xl font-bold neon-text">Sign Up</h3><button onclick="closeModal('signup-modal')"
-                class="text-gray-400 hover:text-white">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg></button>
-            </div>
-            <form onsubmit="handleSignup(event)">
-              <div class="space-y-4">
-                <div><label for="signup-name" class="block text-sm font-medium mb-2">Full Name</label> <input
-                    type="text" id="signup-name" required placeholder="John Doe">
-                </div>
-                <div><label for="signup-email" class="block text-sm font-medium mb-2">Email</label> <input type="email"
-                    id="signup-email" required placeholder="your@email.com">
-                </div>
-                <div><label for="signup-password" class="block text-sm font-medium mb-2">Password</label> <input
-                    type="password" id="signup-password" required placeholder="••••••••">
-                </div><button type="submit" class="btn-primary w-full">Create Account</button>
-              </div>
-            </form>
-          </div>
-        </div>
-        <div id="success-toast" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2000;"
-          class="glow-card px-6 py-4 rounded-lg">
-          <p id="success-message" class="text-green-400 font-medium"></p>
-        </div>
-      </div>
-      <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-      <script src="script.js"></script>
+    <script>
+      // Pretty URL for home page
+      if (window.location.pathname.endsWith('index.html')) {
+        const prettyUrl = window.location.pathname.replace('index.html', '');
+        history.replaceState(null, '', prettyUrl);
+      }
+    </script>
+    <div data-component="header"></div>
+    <main>
+      <div data-component="live-matches"></div>
+    </main>
+    <div data-component="footer"></div>
+    <div data-component="modals"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <!-- Components -->
+  <script src="components_js/header.js"></script>
+  <script src="components_js/live-matches.js"></script>
+  <script src="components_js/footer.js"></script>
+  <script src="components_js/modals.js"></script>
+  <!-- Main Logic -->
+  <script src="script.js"></script>
 </body>
 
 </html>
