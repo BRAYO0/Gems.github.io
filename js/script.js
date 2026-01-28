@@ -28,6 +28,7 @@ function showToast(msg) {
 
 function switchTab(name) {
   currentFilter = name;
+  sessionStorage.setItem('active_filter', name);
   document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   filterAndDisplayMatches();
 }
@@ -529,6 +530,12 @@ function loadComponents() {
 }
 
 function initApp() {
+  // Restore active filter if present
+  const savedFilter = sessionStorage.getItem('active_filter');
+  if (savedFilter && savedFilter !== 'all') {
+    switchTab(savedFilter);
+  }
+
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
