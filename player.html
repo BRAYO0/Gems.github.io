@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream11 - Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    <script type="text/javascript"
+        src="//cdn.jsdelivr.net/gh/ewwink/clappr-quality-selector-plugin@latest/quality-selector.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: sans-serif;
+        }
+
+        #player {
+            width: 100%;
+            height: 100%;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .stream-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stream-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ccc;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .stream-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .stream-btn.active {
+            background: #00ff87;
+            color: black;
+            border-color: #00ff87;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="back-btn">← Back to Home</a>
+
+    <div id="switcher" class="stream-switcher" style="display: none;"></div>
+
+    <div id="player"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const urlParam = params.get('url');
+            const streamsParam = params.get('streams');
+
+            let streams = [];
+            let player = null;
+
+            // Initialize streams array
+            if (streamsParam) {
+                try {
+                    streams = JSON.parse(streamsParam);
+                } catch (e) {
+                    console.error("Failed to parse streams:", e);
+                }
+            }
+
+            // Fallback to single URL if no streams array
+            if (streams.length === 0 && urlParam) {
+                streams.push(urlParam);
+            }
+
+            if (streams.length === 0) {
+                document.body.innerHTML = '<div style="color:white;text-align:center;padding-top:20%;">No stream URL provided.</div>';
+                return;
+            }
+
+            // Setup Switcher
+            const switcher = document.getElementById('switcher');
+            if (streams.length > 1) {
+                switcher.style.display = 'flex';
+                streams.forEach((s, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'stream-btn';
+                    btn.textContent = `Stream ${index + 1}`;
+                    btn.onclick = () => loadStream(index);
+                    switcher.appendChild(btn);
+                });
+            }
+
+            // Parse URL and Headers
+            function parseStreamData(rawUrl) {
+                // Handle object format (from new API)
+                if (typeof rawUrl === 'object' && rawUrl.url) {
+                    return { videoUrl: rawUrl.url, customHeaders: rawUrl.headers || {} };
+                }
+
+                let videoUrl = rawUrl;
+                let customHeaders = {};
+
+                // Handle pipe separator (Legacy/Highlights)
+                if (typeof rawUrl === 'string' && rawUrl.includes('|')) {
+                    const parts = rawUrl.split('|');
+                    videoUrl = parts[0];
+                    const headerPart = parts[1];
+                    if (headerPart) {
+                        const firstEq = headerPart.indexOf('=');
+                        if (firstEq > -1) {
+                            const key = headerPart.substring(0, firstEq);
+                            const val = headerPart.substring(firstEq + 1);
+                            customHeaders[key] = val;
+                        }
+                    }
+                }
+                return { videoUrl, customHeaders };
+            }
+
+            function loadStream(index) {
+                // Update UI
+                if (streams.length > 1) {
+                    const buttons = switcher.querySelectorAll('.stream-btn');
+                    buttons.forEach((b, i) => {
+                        b.classList.toggle('active', i === index);
+                    });
+                }
+
+                // Destroy existing player
+                if (player) {
+                    player.destroy();
+                    player = null;
+                }
+
+                const rawUrl = streams[index];
+                const { videoUrl, customHeaders } = parseStreamData(rawUrl);
+
+                console.log(`Loading Stream ${index + 1}:`, videoUrl);
+                console.log("Headers:", customHeaders);
+
+                player = new Clappr.Player({
+                    source: videoUrl,
+                    parentId: "#player",
+                    width: '100%',
+                    height: '100%',
+                    autoPlay: true,
+                    plugins: [QualitySelector],
+                    qualitySelectorConfig: {
+                        title: 'Quality',
+                        labelCallback: function (playbackLevel, customLabel) {
+                            return playbackLevel.level.height + 'p';
+                        }
+                    },
+                    playback: {
+                        hlsjsConfig: {
+                            xhrSetup: function (xhr, url) {
+                                for (const [key, value] of Object.entries(customHeaders)) {
+                                    if (value !== null && value !== undefined) {
+                                        xhr.setRequestHeader(key, value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Start with first stream
+            loadStream(0);
+        });
+    </script>
+</body>
+
+</html>

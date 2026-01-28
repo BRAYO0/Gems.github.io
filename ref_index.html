@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stream11 - Live Football Streaming</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    /* Neon Glow Effects */
+    .neon-text {
+      text-shadow: 0 0 10px rgba(0, 255, 135, 0.8),
+        0 0 20px rgba(0, 255, 135, 0.6),
+        0 0 30px rgba(0, 255, 135, 0.4);
+    }
+
+    .neon-border {
+      box-shadow: 0 0 15px rgba(0, 255, 135, 0.5),
+        inset 0 0 15px rgba(0, 255, 135, 0.1);
+      border: 2px solid rgba(0, 255, 135, 0.3);
+    }
+
+    .glow-card {
+      background: rgba(26, 31, 58, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 135, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(0, 255, 135, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .glow-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(0, 255, 135, 0.3);
+      border-color: rgba(0, 255, 135, 0.5);
+    }
+
+    /* Smooth Button Animations */
+    .btn-primary {
+      background: linear-gradient(135deg, #00ff87 0%, #00d66f 100%);
+      color: #0a0e27;
+      font-weight: 600;
+      padding: 12px 32px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 255, 135, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 255, 135, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-weight: 500;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(0, 255, 135, 0.5);
+    }
+
+    /* Live Score Cards */
+    .score-card {
+      animation: fadeInUp 0.5s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .live-indicator {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Carousel */
+    .carousel-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+
+    .carousel-slide {
+      display: none;
+      animation: slideIn 0.5s ease;
+    }
+
+    .carousel-slide.active {
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Tabs */
+    .tab-button {
+      position: relative;
+      padding: 12px 24px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.6);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .tab-button.active {
+      color: #00ff87;
+    }
+
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00ff87, #00d66f);
+      border-radius: 3px 3px 0 0;
+      animation: slideFromLeft 0.3s ease;
+    }
+
+    @keyframes slideFromLeft {
+      from {
+        transform: scaleX(0);
+      }
+
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Mobile Menu */
+    .mobile-menu {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .mobile-menu.open {
+      transform: translateX(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .desktop-only {
+        display: none;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-only {
+        display: none;
+      }
+    }
+
+    /* Login Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1a1f3a 0%, #0a0e27 100%);
+      padding: 32px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      animation: scaleIn 0.3s ease;
+      box-shadow: 0 0 40px rgba(0, 255, 135, 0.3);
+      border: 1px solid rgba(0, 255, 135, 0.2);
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #00ff87;
+      box-shadow: 0 0 15px rgba(0, 255, 135, 0.2);
+    }
+
+    /* League Flags */
+    .league-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    /* Added utility for video backgrounds in carousel */
+    .video-bg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: 0;
+      transform: translateX(-50%) translateY(-50%);
+      object-fit: cover;
+      opacity: 0.4;
+      /* Dim the video slightly so text pops */
+    }
+
+    .carousel-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(10, 14, 39, 0.9) 0%, rgba(10, 14, 39, 0.2) 100%);
+      z-index: 1;
+    }
+  </style>
+  <style>
+    @view-transition {
+      navigation: auto;
+    }
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+
+<body class="h-full">
+  <div id="app-wrapper" class="w-full h-full overflow-auto">
+    <header class="sticky top-0 z-50 backdrop-filter backdrop-blur-lg bg-opacity-90"
+      style="background: rgba(10, 14, 39, 0.95); border-bottom: 1px solid rgba(0, 255, 135, 0.1);">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center neon-border">
+              <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#00ff87" />
+                <path d="M2 17L12 22L22 17" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
+                <path d="M2 12L12 17L22 12" stroke="#00ff87" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div>
+              <h1 id="site-title" class="text-xl sm:text-2xl font-bold neon-text">Stream11</h1>
+              <p id="tagline" class="text-xs text-gray-400 desktop-only">Live Football Streaming &amp; Scores</p>
+            </div>
+          </div>
+          <nav class="desktop-only flex items-center space-x-6">
+            <a href="#" class="text-sm font-medium hover:text-green-400 transition-colors">Home</a>
+            <a href="#live-section" class="text-sm font-medium hover:text-green-400 transition-colors">Live Matches</a>
+            <a href="#highlights-section"
+              class="text-sm font-medium hover:text-green-400 transition-colors">Highlights</a>
+            <a href="#leagues-section" class="text-sm font-medium hover:text-green-400 transition-colors">Leagues</a>
+            <a href="#stats" class="text-sm font-medium hover:text-green-400 transition-colors">Stats</a>
+            <a href="#fan-zone" class="text-sm font-medium hover:text-green-400 transition-colors">Fan Zone</a>
+          </nav>
+          <div class="desktop-only flex items-center space-x-3"><button onclick="openLoginModal()"
+              class="btn-secondary">Login</button> <button onclick="openSignupModal()" class="btn-primary">Sign
+              Up</button>
+          </div><button onclick="toggleMobileMenu()" class="mobile-only p-2">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg></button>
+        </div>
+      </div>
+    </header>
+    <div id="mobile-menu"
+      class="mobile-menu mobile-only fixed top-0 left-0 w-64 h-full z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl">
+      <div class="p-6"><button onclick="toggleMobileMenu()" class="mb-8 text-gray-400 hover:text-white">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 18L18 6M6 6l12 12" />
+          </svg></button>
+        <nav class="space-y-4">
+          <a href="#" class="block text-lg font-medium hover:text-green-400 transition-colors">Home</a>
+          <a href="#live-section" class="block text-lg font-medium hover:text-green-400 transition-colors">Live
+            Matches</a>
+          <a href="#highlights-section"
+            class="block text-lg font-medium hover:text-green-400 transition-colors">Highlights</a>
+          <a href="#leagues-section"
+            class="block text-lg font-medium hover:text-green-400 transition-colors">Leagues</a>
+          <a href="#stats" class="block text-lg font-medium hover:text-green-400 transition-colors">Stats</a>
+          <a href="#fan-zone" class="block text-lg font-medium hover:text-green-400 transition-colors">Fan Zone</a>
+          <div class="pt-6 space-y-3"><button onclick="openLoginModal(); toggleMobileMenu();"
+              class="btn-secondary w-full">Login</button> <button onclick="openSignupModal(); toggleMobileMenu();"
+              class="btn-primary w-full">Sign Up</button>
+          </div>
+        </nav>
+      </div>
+    </div>
+
+    <section class="relative overflow-hidden py-16 sm:py-24">
+      <div class="absolute inset-0 opacity-20">
+        <div class="absolute top-10 left-10 w-32 h-32 sm:w-64 sm:h-64 bg-green-500 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-10 right-10 w-32 h-32 sm:w-64 sm:h-64 bg-blue-500 rounded-full blur-3xl"></div>
+      </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center">
+          <h2 id="banner-title" class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 neon-text">Watch Live Football
+          </h2>
+          <p id="banner-subtitle" class="text-lg sm:text-xl text-gray-300 mb-8">Stream every match in HD quality</p>
+          <button id="cta-button" onclick="openSignupModal()" class="btn-primary text-lg">Start Watching</button>
+        </div>
+
+        <div id="highlights-section" class="mt-16 carousel-container glow-card overflow-hidden relative">
+          <div id="carousel" class="relative h-96 sm:h-[500px]">
+
+            <div class="carousel-slide active absolute inset-0">
+              <video class="video-bg" autoplay muted loop playsinline>
+                <source
+                  src="https://assets.mixkit.co/videos/preview/mixkit-soccer-player-kicking-the-ball-in-the-stadium-2091-large.mp4"
+                  type="video/mp4">
+              </video>
+              <div class="carousel-overlay"></div>
+              <div class="relative z-10 h-full flex items-end justify-center pb-12">
+                <div
+                  class="text-center p-6 bg-black bg-opacity-40 backdrop-blur-md rounded-xl border border-green-500/30 mx-4">
+                  <h3 class="text-2xl font-bold mb-2 neon-text">⚽ Champions League Final</h3>
+                  <p class="text-gray-300">Watch the epic showdown highlights in 4K</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="carousel-slide absolute inset-0">
+              <video class="video-bg" autoplay muted loop playsinline>
+                <source
+                  src="https://assets.mixkit.co/videos/preview/mixkit-tech-background-with-a-futuristic-interface-and-a-hologram-32685-large.mp4"
+                  type="video/mp4">
+              </video>
+              <div class="carousel-overlay"></div>
+              <div class="relative z-10 h-full flex items-end justify-center pb-12">
+                <div
+                  class="text-center p-6 bg-black bg-opacity-40 backdrop-blur-md rounded-xl border border-green-500/30 mx-4">
+                  <h3 class="text-2xl font-bold mb-2 neon-text">🏆 Premier League Highlights</h3>
+                  <p class="text-gray-300">Best goals and skills of the week</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="carousel-slide absolute inset-0">
+              <video class="video-bg" autoplay muted loop playsinline>
+                <source
+                  src="https://assets.mixkit.co/videos/preview/mixkit-empty-soccer-stadium-during-the-day-42657-large.mp4"
+                  type="video/mp4">
+              </video>
+              <div class="carousel-overlay"></div>
+              <div class="relative z-10 h-full flex items-end justify-center pb-12">
+                <div
+                  class="text-center p-6 bg-black bg-opacity-40 backdrop-blur-md rounded-xl border border-green-500/30 mx-4">
+                  <h3 class="text-2xl font-bold mb-2 neon-text">⭐ La Liga Action</h3>
+                  <p class="text-gray-300">Don't miss the excitement and drama</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
+            <button onclick="setCarouselSlide(0)"
+              class="w-3 h-3 rounded-full bg-green-500 carousel-dot transition-all"></button>
+            <button onclick="setCarouselSlide(1)"
+              class="w-3 h-3 rounded-full bg-gray-600 carousel-dot transition-all"></button>
+            <button onclick="setCarouselSlide(2)"
+              class="w-3 h-3 rounded-full bg-gray-600 carousel-dot transition-all"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="live-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div class="flex w-full gap-2 p-1 bg-gray-900/50 rounded-full">
+        <button onclick="switchTab('all')" class="tab-button flex-1 rounded-full active" data-tab="all">All</button>
+        <button onclick="switchTab('live')" class="tab-button flex-1 rounded-full" data-tab="live">🔴 Live</button>
+        <button onclick="switchTab('upcoming')" class="tab-button flex-1 rounded-full" data-tab="upcoming">🔜
+          Upcoming</button>
+        <button onclick="switchTab('finished')" class="tab-button flex-1 rounded-full" data-tab="finished">✅
+          Finished</button>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 relative z-10">
+      <div id="matches-container" class="tab-content active">
+        <div id="live-scores" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+      </div>
+    </section>
+
+    <section id="leagues-section"
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800">
+      <h2 class="text-3xl font-bold mb-8 neon-text">Popular Leagues</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇬🇧</span>
+          <p class="mt-2 font-medium">Premier League</p>
+        </div>
+        <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇪🇸</span>
+          <p class="mt-2 font-medium">La Liga</p>
+        </div>
+        <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇮🇹</span>
+          <p class="mt-2 font-medium">Serie A</p>
+        </div>
+        <div class="glow-card p-6 rounded-lg"><span class="text-4xl">🇩🇪</span>
+          <p class="mt-2 font-medium">Bundesliga</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="stats" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800">
+      <h2 class="text-3xl font-bold mb-8 neon-text">Season Stats</h2>
+      <div class="glow-card p-8 rounded-lg text-center text-gray-400">
+        <svg class="w-16 h-16 mx-auto mb-4 text-green-500 opacity-50" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z">
+          </path>
+        </svg>
+        <p class="text-xl">Detailed statistics coming soon.</p>
+      </div>
+    </section>
+
+    <section id="fan-zone"
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10 border-t border-gray-800 mb-16">
+      <h2 class="text-3xl font-bold mb-8 neon-text">Fan Zone</h2>
+      <div class="glow-card p-8 rounded-lg text-center text-gray-400">
+        <svg class="w-16 h-16 mx-auto mb-4 text-blue-500 opacity-50" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+          </path>
+        </svg>
+        <p class="text-xl">Join the community discussion soon.</p>
+        <button class="btn-primary mt-6">Join Waitlist</button>
+      </div>
+    </section>
+
+    <div id="login-modal" class="modal">
+      <div class="modal-content">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold neon-text">Login</h3><button onclick="closeModal('login-modal')"
+            class="text-gray-400 hover:text-white">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg></button>
+        </div>
+        <form onsubmit="handleLogin(event)">
+          <div class="space-y-4">
+            <div><label for="login-email" class="block text-sm font-medium mb-2">Email</label> <input type="email"
+                id="login-email" required placeholder="your@email.com">
+            </div>
+            <div><label for="login-password" class="block text-sm font-medium mb-2">Password</label> <input
+                type="password" id="login-password" required placeholder="••••••••">
+            </div><button type="submit" class="btn-primary w-full">Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="signup-modal" class="modal">
+      <div class="modal-content">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold neon-text">Sign Up</h3><button onclick="closeModal('signup-modal')"
+            class="text-gray-400 hover:text-white">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg></button>
+        </div>
+        <form onsubmit="handleSignup(event)">
+          <div class="space-y-4">
+            <div><label for="signup-name" class="block text-sm font-medium mb-2">Full Name</label> <input type="text"
+                id="signup-name" required placeholder="John Doe">
+            </div>
+            <div><label for="signup-email" class="block text-sm font-medium mb-2">Email</label> <input type="email"
+                id="signup-email" required placeholder="your@email.com">
+            </div>
+            <div><label for="signup-password" class="block text-sm font-medium mb-2">Password</label> <input
+                type="password" id="signup-password" required placeholder="••••••••">
+            </div><button type="submit" class="btn-primary w-full">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div id="success-toast" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2000;"
+      class="glow-card px-6 py-4 rounded-lg">
+      <p id="success-message" class="text-green-400 font-medium"></p>
+    </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      site_title: "Stream11",
+      tagline: "Live Football Streaming & Scores",
+      banner_title: "Watch Live Football",
+      banner_subtitle: "Stream every match in HD quality",
+      cta_button_text: "Start Watching"
+    };
+
+    let currentCarouselSlide = 0;
+    let carouselInterval;
+
+    // Carousel functionality
+    function startCarousel() {
+      carouselInterval = setInterval(() => {
+        currentCarouselSlide = (currentCarouselSlide + 1) % 3;
+        setCarouselSlide(currentCarouselSlide);
+      }, 5000);
+    }
+
+    function setCarouselSlide(index) {
+      currentCarouselSlide = index;
+      const slides = document.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.carousel-dot');
+
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+
+      dots.forEach((dot, i) => {
+        dot.style.backgroundColor = i === index ? '#00ff87' : '#4b5563';
+      });
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+
+      tabContents.forEach(content => {
+        content.classList.toggle('active', content.id === `${tabName}-tab`);
+      });
+    }
+
+    // Mobile menu
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('open');
+    }
+
+    // Modal functions
+    function openLoginModal() {
+      document.getElementById('login-modal').classList.add('active');
+    }
+
+    function openSignupModal() {
+      document.getElementById('signup-modal').classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function showSuccess(message) {
+      const toast = document.getElementById('success-toast');
+      const messageEl = document.getElementById('success-message');
+      messageEl.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      closeModal('login-modal');
+      showSuccess('Login successful! Welcome back.');
+    }
+
+    function handleSignup(event) {
+      event.preventDefault();
+      closeModal('signup-modal');
+      showSuccess('Account created! Welcome to Stream11.');
+    }
+
+    // Store all matches globally for filtering
+    let allMatches = [];
+    let currentFilter = 'all';
+
+    // Flag to indicate if an update is in progress (for silent updates)
+    window.isUpdating = false;
+
+    // Fetch matches from external API
+    async function fetchMatches(isUpdate = false) {
+      window.isUpdating = isUpdate;
+      console.log(`[Stream11] fetchMatches called. isUpdate=${isUpdate}`);
+      const container = document.getElementById('live-scores');
+      if (container && !isUpdate) { // Only show loading spinner if not a silent update
+        container.innerHTML = '<div class="col-span-full text-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div><p class="text-gray-400">Loading matches...</p></div>';
+      }
+
+      try {
+        // Fetch both APIs in parallel
+        // API 1: Fixtures
+        const p1 = fetch('https://match-fetch.netlify.app/matches').then(r => r.ok ? r.json() : []).catch(() => []);
+
+        // API 2: Live Scores
+        const p2 = fetch('https://streamxi-score.noelbaraza254.workers.dev/matches', {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 13; M2006C3LG Build/TQ3A.230901.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.5414.123 Mobile Safari/537.36'
+          }
+        }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+        const [scheduleData, scoreDataResponse] = await Promise.all([p1, p2]);
+
+        if (!scheduleData || scheduleData.length === 0) {
+          throw new Error('No schedule data available');
+        }
+
+        const scoreLookup = {};
+        if (scoreDataResponse) {
+          const matchesList = Array.isArray(scoreDataResponse) ? scoreDataResponse : (scoreDataResponse.matches || []);
+          matchesList.forEach(m => {
+            // score API uses match_id or id.
+            const mid = String(m.match_id || m.id || '');
+            if (mid) scoreLookup[mid] = m;
+          });
+        }
+
+        // Merge & Store Data
+        allMatches = scheduleData.map(match => {
+          // Ensure robust ID. Fallback to hash of names if ID missing.
+          const stableId = String(match.id || match.match_id || ((match.home_team?.name || 'h') + (match.away_team?.name || 'a')).replace(/[^a-zA-Z0-9]/g, ''));
+
+          let liveMatch = scoreLookup[stableId] || scoreLookup[String(match.id || '')] || {};
+
+          return {
+            ...match,
+            id: stableId, // Overwrite with stable generated ID if needed
+            home_score: liveMatch.home_score || '-',
+            away_score: liveMatch.away_score || '-',
+            time_period: liveMatch.time_period || match.time || 'Upcoming',
+            home_team: match.home_team,
+            away_team: match.away_team,
+            competition_logo: match.competition_logo,
+            competition: match.competition,
+            kickoff: match.kickoff,
+            kickoffDate: (() => {
+              // Strictly use Date and Time from API 1 (match-fetch) as requested
+              let k = null;
+              if (match.date && match.time) {
+                const cleanTime = match.time.replace(/[^0-9:]/g, '');
+                k = `${match.date}T${cleanTime}:00Z`;
+              } else if (match.kickoff) {
+                k = match.kickoff;
+                if (!k.endsWith('Z') && !k.includes('+') && !k.includes('-')) {
+                  k += 'Z';
+                }
+              }
+              return k ? new Date(k) : null;
+            })()
+          };
+        });
+
+        // Apply current filter
+        filterAndDisplayMatches();
+      } catch (error) {
+        console.error('Error fetching matches:', error);
+        if (container && !window.isUpdating) { // Only show error if not a silent update
+          container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><p>Unable to load matches. Please try again later.</p></div>';
+        }
+      } finally {
+        window.isUpdating = false; // Reset flag after fetch completes
+      }
+    }
+
+    function switchTab(name) {
+      console.log(`[Stream11] switchTab to ${name}`);
+      currentFilter = name;
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      filterAndDisplayMatches();
+    }
+
+    function filterAndDisplayMatches() {
+      const now = new Date();
+      // 2.5 hours in milliseconds
+      const DURATION_MS = 2.5 * 60 * 60 * 1000;
+
+      const getMatchCategory = (m) => {
+        const status = m.time_period || '';
+
+        // 1. Explicit API Status Overrides
+        if (status === 'FT' || status === 'Full time' || status === 'Finished') {
+          return 'finished';
+        }
+        if (status.includes("'") || status.includes("Live") || status.includes("Half") || status.includes("HT")) {
+          return 'live';
+        }
+
+        // 2. Fallback Time Logic (if status is just time/upcoming/empty)
+        if (!m.kickoffDate) return 'upcoming';
+        const diff = now - m.kickoffDate;
+
+        if (diff > DURATION_MS) return 'finished';
+        if (diff >= 0) return 'live';
+        return 'upcoming';
+      };
+
+      let filtered = [];
+
+      if (currentFilter === 'all') {
+        filtered = allMatches;
+      } else {
+        filtered = allMatches.filter(m => getMatchCategory(m) === currentFilter);
+      }
+
+      // If this is an update and we found matches, try silent update
+      if (window.isUpdating && filtered.length > 0) {
+        console.log(`[Stream11] Silent updating ${filtered.length} matches.`);
+        updateVisibleMatches(filtered);
+      } else {
+        console.log(`[Stream11] Full render of ${filtered.length} matches.`);
+        displayMatches(filtered);
+      }
+    }
+
+    function updateVisibleMatches(matches) {
+      const container = document.getElementById('live-scores');
+      if (!container) return;
+
+      // If container is empty or shows a placeholder, re-render fully
+      if (container.children.length === 0 || container.querySelector('.placeholder-text')) {
+        console.log('[Stream11] Container empty during update, forcing displayMatches.');
+        displayMatches(matches);
+        return;
+      }
+
+      matches.forEach(match => {
+        const matchId = match.id; // Guaranteed stable now
+        if (!matchId) return;
+
+        const card = document.getElementById(`match-${matchId}`);
+        if (card) {
+          const statusEl = card.querySelector('.match-status');
+          const scoreHomeEl = card.querySelector('.score-home');
+          const scoreAwayEl = card.querySelector('.score-away');
+          const liveDot = card.querySelector('.live-indicator');
+
+          let statusText = match.time_period || 'Upcoming';
+          let isLive = false;
+          const liveKeywords = ["'", "Live", "Half"];
+          if (liveKeywords.some(k => statusText.includes(k))) isLive = true;
+          if (statusText === "Full time") { statusText = "FT"; isLive = false; }
+
+          if (!statusText || statusText === 'Upcoming' || statusText.includes(':')) {
+            let kickoffTime = match.kickoffDate;
+            if (kickoffTime && !isNaN(kickoffTime.getTime())) {
+              const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              statusText = kickoffTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: userTimezone });
+            }
+          }
+
+          if (statusEl && statusEl.textContent !== statusText) statusEl.textContent = statusText;
+          if (scoreHomeEl) scoreHomeEl.textContent = match.home_score || '-';
+          if (scoreAwayEl) scoreAwayEl.textContent = match.away_score || '-';
+
+          if (liveDot) {
+            liveDot.style.display = isLive ? 'inline-block' : 'none';
+            // Also update classes for color logic if needed, but styling handles .live-indicator visibility
+          }
+        }
+      });
+    }
+
+    function displayMatches(matches) {
+      const container = document.getElementById('live-scores');
+      if (!container) return;
+
+      if (!matches || matches.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400 placeholder-text"><p>No matches scheduled for today</p></div>';
+        return;
+      }
+
+      container.innerHTML = matches.map(match => {
+        // Parse data from StreamXI API
+        const homeScore = match.home_score ?? '-';
+        const awayScore = match.away_score ?? '-';
+
+        // Status logic
+        let statusText = match.time_period || 'Upcoming';
+        let isLive = false;
+
+        // Check for live keywords in time_period
+        const liveKeywords = ["'", "Live", "Half"];
+        if (liveKeywords.some(k => statusText.includes(k))) {
+          isLive = true;
+        }
+
+        if (statusText === "Full time") {
+          statusText = "FT";
+          isLive = false;
+        }
+
+        // Fallback for empty status or if it's just a time string (implying upcoming)
+        // We prioritize the local formatted time.
+        if (!statusText || statusText === 'Upcoming' || statusText.includes(':')) {
+          let kickoffTime = match.kickoff;
+
+          // If no kickoff but we have date and time from API 1
+          if (!kickoffTime && match.date && match.time) {
+            // Assume API time is UTC. Format: YYYY-MM-DDTHH:MM:00Z
+            const cleanTime = match.time.replace(/[^0-9:]/g, '');
+            kickoffTime = `${match.date}T${cleanTime}:00Z`;
+          } else if (kickoffTime) {
+            // Force UTC on existing kickoff if needed
+            if (!kickoffTime.endsWith('Z') && !kickoffTime.includes('+') && !kickoffTime.includes('-')) {
+              kickoffTime += 'Z';
+            }
+          }
+
+          if (kickoffTime) {
+            const date = new Date(kickoffTime);
+            if (!isNaN(date.getTime())) {
+              // Get user's timezone exactly as requested
+              const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              statusText = date.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: userTimezone
+              });
+            }
+          }
+        }
+
+        // Fix for API 1 structure (nested objects)
+        const homeName = match.home_team?.name || match.home_team || 'Home Team';
+        const awayName = match.away_team?.name || match.away_team || 'Away Team';
+
+        const homeLogo = match.home_team?.logo || match.home_logo || 'https://via.placeholder.com/24';
+        const awayLogo = match.away_team?.logo || match.away_logo || 'https://via.placeholder.com/24';
+        const compLogo = match.competition_logo || '';
+        const league = match.competition || 'Football';
+        const matchId = match.id; // Should be stable from map()
+
+        return `
+          <div id="match-${matchId}" class="score-card glow-card rounded-lg p-6 cursor-pointer hover:border-green-500/50 transition-colors">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-2">
+                ${compLogo ? `<img src="${compLogo}" class="w-6 h-6 rounded-full bg-white p-0.5 object-contain">` : '<span class="league-icon">⚽</span>'}
+                <span class="text-xs text-gray-400">${league}</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="live-indicator w-2 h-2 bg-red-500 rounded-full" style="display:${isLive ? 'inline-block' : 'none'}"></span>
+                <span class="match-status text-xs ${isLive ? 'text-red-400' : 'text-gray-400'} font-medium">${statusText}</span>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3 flex-1">
+                  <img src="${homeLogo}" class="w-8 h-8 object-contain" alt="${homeName}">
+                  <span class="font-medium">${homeName}</span>
+                </div>
+                <span class="score-home text-2xl font-bold neon-text w-8 text-center">${homeScore}</span>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3 flex-1">
+                 <img src="${awayLogo}" class="w-8 h-8 object-contain" alt="${awayName}">
+                  <span class="font-medium">${awayName}</span>
+                </div>
+                <span class="score-away text-2xl font-bold neon-text w-8 text-center">${awayScore}</span>
+              </div>
+            </div>
+            
+            <button class="btn-primary w-full mt-4 text-sm opacity-80 hover:opacity-100">Watch Stream</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function onConfigChange(config) {
+      document.getElementById('site-title').textContent = config.site_title || defaultConfig.site_title;
+      document.getElementById('tagline').textContent = config.tagline || defaultConfig.tagline;
+      document.getElementById('banner-title').textContent = config.banner_title || defaultConfig.banner_title;
+      document.getElementById('banner-subtitle').textContent = config.banner_subtitle || defaultConfig.banner_subtitle;
+      document.getElementById('cta-button').textContent = config.cta_button_text || defaultConfig.cta_button_text;
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['site_title', config.site_title || defaultConfig.site_title],
+        ['tagline', config.tagline || defaultConfig.tagline],
+        ['banner_title', config.banner_title || defaultConfig.banner_title],
+        ['banner_subtitle', config.banner_subtitle || defaultConfig.banner_subtitle],
+        ['cta_button_text', config.cta_button_text || defaultConfig.cta_button_text]
+      ]);
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    // Initialize
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Start carousel and load scores on page load
+    startCarousel();
+    fetchMatches();
+    // Auto-refresh every 10 seconds
+    setInterval(() => fetchMatches(true), 10000);
+  </script>
+</body>
+
+</html>

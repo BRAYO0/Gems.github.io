@@ -69,20 +69,20 @@ function switchTab(name) {
 // Mobile menu (Using Set 1's original function/IDs)
 function toggleMobileMenu() {
   const m = document.getElementById('mobile-menu');
-  m.classList.toggle('open');
+  if (m) m.classList.toggle('hidden');
 }
 
 // Modals (Using Set 1's original function/IDs)
 function openLoginModal() {
-  document.getElementById('login-modal').setAttribute('aria-hidden', 'false');
+  document.getElementById('login-modal').classList.add('active');
 }
 
 function openSignupModal() {
-  document.getElementById('signup-modal').setAttribute('aria-hidden', 'false');
+  document.getElementById('signup-modal').classList.add('active');
 }
 
 function closeModal(id) {
-  document.getElementById(id).setAttribute('aria-hidden', 'true');
+  document.getElementById(id).classList.remove('active');
 }
 
 /* ========================================
@@ -117,95 +117,91 @@ async function fetchMatches(isUpdate = false) {
   }
 
   try {
-    // Fetch both APIs in parallel
+    // Fetch matches from external API
     // API 1: Fixtures
-    const p1 = fetch('https://match-fetch.netlify.app/matches').then(r => r.ok ? r.json() : []).catch(() => []);
+    const scheduleData = await fetch('https://match-fetch.netlify.app/matches').then(r => r.ok ? r.json() : []).catch(e => {
+      console.error("Fetch error:", e);
+      return [];
+    });
 
-    // API 2: Live Scores
-    const p2 = fetch('https://match-fetch.netlify.app/scores').then(r => r.ok ? r.json() : null).catch(() => null);
-
-    const [scheduleData, scoreDataResponse] = await Promise.all([p1, p2]);
+    console.log("Schedule Data:", scheduleData);
 
     if (!scheduleData || scheduleData.length === 0) {
       throw new Error('No schedule data available');
     }
 
-    // Prepare lookup for live scores (ID and Name based)
-    const scoreLookup = {};
-    const scoreLookupByName = {}; // Fallback
-
-    if (scoreDataResponse) {
-      const matchesList = Array.isArray(scoreDataResponse) ? scoreDataResponse : (scoreDataResponse.matches || []);
-      matchesList.forEach(m => {
-        // ID Map
-        const mid = String(m.match_id || m.id || '');
-        if (mid) scoreLookup[mid] = m;
-
-        // Name Map (Normalization: lowercase, remove special chars)
-        const homeName = m.home?.name || m.home_team || '';
-        if (homeName) {
-          const simpleName = homeName.toLowerCase().replace(/[^a-z0-9]/g, '');
-          scoreLookupByName[simpleName] = m;
-        }
-      });
-    }
-
     // Merge & Store Data
     const matches = scheduleData.map(match => {
-      // 1. Try ID Match
+      // Ensure robust ID
       const stableId = String(match.id || match.match_id || ((match.home_team?.name || 'h') + (match.away_team?.name || 'a')).replace(/[^a-zA-Z0-9]/g, ''));
-      let liveMatch = scoreLookup[stableId] || scoreLookup[String(match.id || '')];
 
-      // 2. Fallback to Name Match if ID match failed
-      if (!liveMatch) {
-        const hName = match.home_team?.name || match.home_team || '';
-        if (hName) {
-          const simpleHName = hName.toLowerCase().replace(/[^a-z0-9]/g, '');
-          liveMatch = scoreLookupByName[simpleHName];
-        }
+      // Use scores from the match object directly
+      const homeScore = match.home_score ?? '-';
+      const awayScore = match.away_score ?? '-';
+
+      // Normalize status
+      let statusRaw = match.status || match.time_period || match.time;
+      if (statusRaw && ['not started', 'ns', 'scheduled'].includes(statusRaw.toLowerCase())) {
+        statusRaw = 'Upcoming';
       }
 
-      // Default to empty if still not found
-      liveMatch = liveMatch || {};
+      let internalStatus = statusRaw || 'Upcoming';
+      if (internalStatus.toLowerCase() === 'not started') internalStatus = 'Upcoming';
 
-      // Adapt new structure to internal format
-      // New: liveMatch.home.score, liveMatch.status
-      // Fallback: Use existing match data or defaults
-      const homeScore = liveMatch.home?.score ?? match.home_score ?? '-';
-      const awayScore = liveMatch.away?.score ?? match.away_score ?? '-';
-      // Normalize 'Not started' to null so it falls back to time/upcoming logic
-      let statusRaw = liveMatch.status || liveMatch.time_period;
-      if (statusRaw === 'Not started') statusRaw = null;
+      // Determine if match has started
+      const isStarted = internalStatus !== 'Upcoming' &&
+        !internalStatus.match(/^\d{1,2}:\d{2}$/) &&
+        !internalStatus.toLowerCase().includes('postp');
 
-      const internalStatus = statusRaw || match.time || 'Upcoming';
+      // Calculate Kickoff Date
+      let kickoffDate = null;
+      if (match.date && match.time) {
+        // Format: YYYY-MM-DD and HH:MM
+        // Create ISO string for parsing: YYYY-MM-DDTHH:MM:00
+        // Note: This assumes the API time is local to the user or UTC. 
+        // Given no timezone info, we'll try to treat it as local string or append Z if needed.
+        // Usually these APIs are UTC. Let's assume UTC for consistency with 'Z'.
+        const cleanTime = match.time.replace(/[^0-9:]/g, '');
+        // Trying explicit UTC
+        kickoffDate = new Date(`${match.date}T${cleanTime}:00Z`); // Added Z to force UTC interpretation
+      } else if (match.kickoff) {
+        let k = match.kickoff;
+        if (!k.endsWith('Z') && !k.includes('+') && !k.includes('-')) {
+          k += 'Z';
+        }
+        kickoffDate = new Date(k);
+      }
+
+      // Fallback if Date is invalid
+      if (kickoffDate && isNaN(kickoffDate.getTime())) {
+        console.warn("Invalid date for match:", match.id, match.date, match.time);
+        kickoffDate = new Date(); // Fallback to now so it shows? Or null.
+      }
+
+      // Check nested objects usage
+      const homeTeamName = match.home_team?.name || match.home_team || 'Home Team';
+      const awayTeamName = match.away_team?.name || match.away_team || 'Away Team';
+      const homeTeamLogo = match.home_team?.logo || match.home_logo || 'assets/teams/default.png';
+      const awayTeamLogo = match.away_team?.logo || match.away_logo || 'assets/teams/default.png';
 
       return {
         ...match,
         id: stableId,
-        home_score: homeScore,
-        away_score: awayScore,
+        home_score: isStarted ? homeScore : '-',
+        away_score: isStarted ? awayScore : '-',
         time_period: internalStatus,
-        // Keep original metadata
-        home_team: match.home_team,
-        away_team: match.away_team,
+        home_team: { name: homeTeamName, logo: homeTeamLogo },
+        away_team: { name: awayTeamName, logo: awayTeamLogo },
         competition_logo: match.competition_logo,
         competition: match.competition,
-        kickoffDate: (() => {
-          // Strictly use Date and Time from API 1 (match-fetch) as requested
-          let k = null;
-          if (match.date && match.time) {
-            const cleanTime = match.time.replace(/[^0-9:]/g, '');
-            k = `${match.date}T${cleanTime}:00Z`;
-          } else if (match.kickoff) {
-            k = match.kickoff;
-            if (!k.endsWith('Z') && !k.includes('+') && !k.includes('-')) {
-              k += 'Z';
-            }
-          }
-          return k ? new Date(k) : null;
-        })()
+        kickoffDate: kickoffDate
       };
     });
+
+    console.log("Processed Matches:", matches);
+
+    // Assign to global variable for filtering/display
+    allMatches = matches;
 
     // Initial filter call
     filterAndDisplayMatches();
@@ -390,27 +386,129 @@ function displayMatches(matches) {
     const matchId = match.id || match.match_id || Math.random().toString(36).substr(2, 9);
 
     const card = document.createElement('div');
-    card.className = 'score-card';
+    card.className = 'score-card glow-card rounded-lg p-6 cursor-pointer hover:border-green-500/50 transition-colors';
     card.id = `match-${matchId}`;
 
+    const league = match.competition || 'Football';
+
     card.innerHTML = `
-      <div class="flex-row" style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="left" style="display:flex; align-items:center;">
-            ${compLogo ? `<img src="${compLogo}" class="league-icon" style="background:white;border-radius:50%;padding:2px;" alt="">` : '<span class="league-icon">⚽</span>'}
-            <span class="muted">${match.competition}</span>
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-2">
+          ${compLogo ? `<img src="${compLogo}" class="w-6 h-6 rounded-full bg-white p-0.5 object-contain">` : '<span class="league-icon">⚽</span>'}
+          <span class="text-xs text-gray-400">${league}</span>
         </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;align-items:center">
-          <img src="${awayLogo}" style="width:24px;height:24px;object-fit:contain;margin-right:8px;" alt="">
-            <span>${awayName}</span>
+        <div class="flex items-center space-x-2">
+          <span class="live-indicator w-2 h-2 bg-red-500 rounded-full" style="display:${isLive ? 'inline-block' : 'none'}"></span>
+          <span class="match-status text-xs ${isLive ? 'text-red-400' : 'text-gray-400'} font-medium">${statusText}</span>
         </div>
-        <div style="font-size:18px;font-weight:700;color:var(--accent)">${awayScore}</div>
       </div>
-      </div >
-      <button class="cta" style="width:100%;margin-top:12px">Watch Stream</button>
+      
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3 flex-1">
+            <img src="${homeLogo}" class="w-8 h-8 object-contain" alt="${homeName}">
+            <span class="font-medium">${homeName}</span>
+          </div>
+          <span class="score-home text-2xl font-bold neon-text w-8 text-center">${homeScore}</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3 flex-1">
+           <img src="${awayLogo}" class="w-8 h-8 object-contain" alt="${awayName}">
+            <span class="font-medium">${awayName}</span>
+          </div>
+          <span class="score-away text-2xl font-bold neon-text w-8 text-center">${awayScore}</span>
+        </div>
+      </div>
+      
+      <button class="btn-primary w-full mt-4 text-sm opacity-80 hover:opacity-100" onclick="handleWatchClick('${matchId}')">Watch Stream</button>
     `;
     container.appendChild(card);
   });
+}
+
+
+/* ========================================
+   Highlights Logic
+   ======================================== */
+
+async function fetchHighlights() {
+  const container = document.getElementById('highlights-grid');
+  if (!container) return;
+
+  try {
+    const response = await fetch('https://lyfe05.github.io/highlight-api/matches.json');
+    if (!response.ok) throw new Error('Failed to fetch highlights');
+
+    const data = await response.json();
+    const highlights = data.data || [];
+    window.allHighlights = highlights; // Store globally handling streams
+
+    if (highlights.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">No highlights available at the moment.</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    highlights.forEach((match, index) => {
+      // Ensure we have an ID for lookup
+      match.id = match.id || match.match_id || `hl_${index}`;
+
+      const card = document.createElement('div');
+      card.className = 'glow-card rounded-lg overflow-hidden flex flex-col h-full';
+
+      // Use team logos for visual if no thumbnail
+      const getLogo = (url, name) => {
+        if (url && url.length > 5) return url;
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
+      }
+
+      const homeName = match.home.name;
+      const awayName = match.away.name;
+      const homeLogo = getLogo(match.home.logo_url, homeName);
+      const awayLogo = getLogo(match.away.logo_url, awayName);
+
+      const score = `${match.home.score} - ${match.away.score}`;
+
+      card.innerHTML = `
+        <div class="p-6 flex-grow flex flex-col justify-between">
+          <div class="text-xs font-semibold text-green-400 mb-2 uppercase tracking-wider">${match.league || 'Football'}</div>
+          
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-col items-center w-5/12 text-center">
+              <img src="${homeLogo}" alt="${homeName}" class="w-16 h-16 object-contain mb-2 rounded-full bg-gray-700/50 p-1" 
+                   onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(homeName)}&background=random&color=fff&size=128'">
+              <span class="font-bold text-sm sm:text-base leading-tight">${homeName}</span>
+            </div>
+            
+            <div class="flex flex-col items-center justify-center w-2/12">
+              <div class="text-2xl font-bold text-white whitespace-nowrap bg-gray-800 px-3 py-1 rounded-lg">${score}</div>
+              <span class="text-xs text-gray-500 mt-1">${match.date}</span>
+            </div>
+
+            <div class="flex flex-col items-center w-5/12 text-center">
+              <img src="${awayLogo}" alt="${awayName}" class="w-16 h-16 object-contain mb-2 rounded-full bg-gray-700/50 p-1" 
+                   onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(awayName)}&background=random&color=fff&size=128'">
+              <span class="font-bold text-sm sm:text-base leading-tight">${awayName}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-4 bg-gray-800/50 border-t border-gray-700">
+          <button class="w-full btn-secondary text-sm py-2 disabled:opacity-50 cursor-pointer hover:bg-green-500/20 hover:text-green-400 transition-colors" onclick="handleWatchClick('${match.id}')">
+            Watch Highlights
+          </button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error('Error loading highlights:', error);
+    container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Failed to load highlights.</div>';
+  }
 }
 
 /* ========================================
@@ -450,46 +548,17 @@ function injectClubs() {
 
 // Main DOM Content Loaded Listener (Combining Set 1 & Set 2's event handlers)
 document.addEventListener("DOMContentLoaded", () => {
-  // --- Tabs (From Set 1) ---
-  const tabButtons = document.querySelectorAll(".tab-btn");
-  const tabContents = document.querySelectorAll(".tab-content");
-
-  function setActiveTab(name) {
-    tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
-    tabContents.forEach(c => {
-      const active = c.id === name;
-      c.classList.toggle("active", active);
-      c.setAttribute("aria-hidden", String(!active));
+  // --- Mobile menu links ---
+  document.querySelectorAll(".mobile-link").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      // Check if global switchTab exists
+      if (typeof switchTab === 'function' && tab) {
+        switchTab(tab);
+      }
+      toggleMobileMenu();
     });
-    localStorage.setItem("stream11.activeTab", name);
-    // When a tab is set, attempt to load scores if it's the live/score tab
-    // (Note: Assumes 'football' or a primary score tab is used)
-    if (name === 'football' || name === 'live') {
-      fetchMatches();
-    }
-  }
-
-  tabButtons.forEach(b => b.addEventListener("click", () => setActiveTab(b.dataset.tab)));
-  setActiveTab(localStorage.getItem("stream11.activeTab") || "football");
-
-  // --- Mobile menu (From Set 1) ---
-  const hamburger = document.getElementById("hamburger");
-  const mobileNav = document.getElementById("mobile-nav");
-  if (hamburger && mobileNav) {
-    hamburger.addEventListener("click", () => {
-      const open = mobileNav.getAttribute("aria-hidden") === "false";
-      mobileNav.setAttribute("aria-hidden", String(!open));
-      mobileNav.style.display = open ? "none" : "flex";
-    });
-    // Mobile nav links
-    document.querySelectorAll(".mobile-link").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const tab = btn.dataset.tab;
-        setActiveTab(tab);
-        mobileNav.style.display = "none";
-      });
-    });
-  }
+  });
 
   // --- LOGIN modal (From Set 1 - Detailed) ---
   const loginBtn = document.getElementById("login-btn");
@@ -533,72 +602,117 @@ document.addEventListener("DOMContentLoaded", () => {
   injectClubs();
 
   // --- Carousel: setup (From Set 1) ---
-  const carouselTrack = document.getElementById("carousel-track");
-  const highlights = [
-    {
-      title: "Goal 34'",
-      file: "highlights/h1.mp4"
-    },
-    {
-      title: "Amazing Save",
-      file: "highlights/h2.mp4"
-    },
-    {
-      title: "Top Moment",
-      file: "highlights/h3.mp4"
-    }
-  ];
-  let currentSlide = 0;
-  let autoplay = true;
-
-  // Rebuild slides if carouselTrack exists
-  if (carouselTrack) {
-    highlights.forEach((h, i) => {
-      const slide = document.createElement("div");
-      slide.className = "slide";
-      slide.dataset.index = i;
-      slide.innerHTML = `< video preload = "metadata" controls playsinline muted >
-      <source src="${h.file}" type="video/mp4">
-      </video>`;
-      carouselTrack.appendChild(slide);
-    });
-
-    const slides = Array.from(document.querySelectorAll(".slide"));
-    // Re-implemented goToSlide logic locally for controls
-    function goToSlideLocal(idx) {
-      if (!slides.length) return;
-      currentSlide = (idx + slides.length) % slides.length;
-      carouselTrack.style.transform = `translateX(-${currentSlide * 100} %)`;
-      slides.forEach((s, i) => {
-        const v = s.querySelector("video");
-        if (!v) return;
-        if (i === currentSlide) {
-          v.currentTime = 0;
-          /*v.play();*/
-        } else {
-          v.pause();
-        }
-      });
-    }
-
-    document.getElementById("prev")?.addEventListener("click", () => {
-      goToSlideLocal(currentSlide - 1);
-    });
-    document.getElementById("next")?.addEventListener("click", () => {
-      goToSlideLocal(currentSlide + 1);
-    });
-    const playpauseBtn = document.getElementById("playpause");
-    playpauseBtn?.addEventListener("click", () => {
-      autoplay = !autoplay;
-      playpauseBtn.textContent = autoplay ? "⏯" : "▶";
-      if (autoplay) startCarousel();
-      else stopCarousel();
-    });
-
-    if (autoplay) startCarousel();
-    goToSlideLocal(0);
-  }
+  // --- Highlights: initial load ---
+  fetchHighlights();
 
   // --- Live scores: initial load ---
   fetchMatches();
+  // Auto-refresh every 10 seconds
+  setInterval(() => fetchMatches(true), 10000);
 });
+
+// --- Player Logic ---
+window.handleWatchClick = async function (id) {
+  let match = typeof allMatches !== 'undefined' ? allMatches.find(m => m.id === id) : null;
+
+  if (!match && typeof allHighlights !== 'undefined') {
+    match = allHighlights.find(m => m.id === id);
+  }
+
+  if (!match) return;
+
+  // 1. Check for existing streams (Highlights)
+  if (match.stream_urls && match.stream_urls.length > 0) {
+    // Pass all streams to player page for switching
+    const streamsPayload = encodeURIComponent(JSON.stringify(match.stream_urls));
+    window.location.href = `player.html?streams=${streamsPayload}`;
+    return;
+  }
+
+  // 2. Check for legacy URL
+  if (match.url) {
+    // Fallback for single legacy URL
+    window.location.href = `player.html?url=${encodeURIComponent(match.url)}`;
+    return;
+  }
+
+  // 3. Try fetching live streams (Fixtures)
+  try {
+    document.body.style.cursor = 'wait';
+    // Fetch details from new API
+    const response = await fetch(`https://match-fetch.netlify.app/match/${id}`);
+    if (!response.ok) {
+      // Silent fail or just throw to catch block
+      throw new Error('Fetch failed');
+    }
+
+    const data = await response.json();
+    if (data.streams && data.streams.length > 0) {
+      // Pass the full streams objects (url + headers) to player
+      const streamsPayload = encodeURIComponent(JSON.stringify(data.streams));
+      window.location.href = `player.html?streams=${streamsPayload}`;
+    } else {
+      throw new Error('No streams in response');
+    }
+
+  } catch (error) {
+    console.warn("Stream fetch error:", error);
+    alert("No streams available for this match yet.");
+  } finally {
+    document.body.style.cursor = 'default';
+  }
+}
+
+window.openPlayer = function (url) {
+  if (!url) {
+    alert("Stream URL not available yet.");
+    return;
+  }
+  // Redirect to player page (url might contain | headers, player.html handles it)
+  window.location.href = `player.html?url=${encodeURIComponent(url)}`;
+}
+
+/* ========================================
+   Element SDK Integration
+   ======================================== */
+
+function onConfigChange(config) {
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  setText('site-title', config.site_title || defaultConfig.site_title);
+  setText('tagline', config.tagline || defaultConfig.tagline);
+  setText('banner-title', config.banner_title || defaultConfig.banner_title);
+  setText('banner-subtitle', config.banner_subtitle || defaultConfig.banner_subtitle);
+  setText('cta-button', config.cta_button_text || defaultConfig.cta_button_text);
+}
+
+function mapToEditPanelValues(config) {
+  return new Map([
+    ['site_title', config.site_title || defaultConfig.site_title],
+    ['tagline', config.tagline || defaultConfig.tagline],
+    ['banner_title', config.banner_title || defaultConfig.banner_title],
+    ['banner_subtitle', config.banner_subtitle || defaultConfig.banner_subtitle],
+    ['cta_button_text', config.cta_button_text || defaultConfig.cta_button_text]
+  ]);
+}
+
+function mapToCapabilities(config) {
+  return {
+    recolorables: [],
+    borderables: [],
+    fontEditable: undefined,
+    fontSizeable: undefined
+  };
+}
+
+// Initialize SDK
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange,
+    mapToCapabilities,
+    mapToEditPanelValues
+  });
+}
