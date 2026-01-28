@@ -7,7 +7,7 @@
   <title>Stream11 - Live Football Streaming</title>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="icon" type="image/png" href="app_icon.png">
+  <link rel="icon" type="image/png" href="assets/images/app_icon.png">
   <link href="https://api.fontshare.com/v2/css?f[]=chillax@400&display=swap" rel="stylesheet">
   <style>
     body {
@@ -284,18 +284,18 @@
       navigation: auto;
     }
   </style>
+  <script>
+    // Pretty URL for home page - runs immediately before render
+    if (window.location.pathname.endsWith('index.html')) {
+      const prettyUrl = window.location.pathname.replace('index.html', '');
+      history.replaceState(null, '', prettyUrl);
+    }
+  </script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
 </head>
 
 <body class="h-full">
   <div id="app-wrapper" class="w-full h-full overflow-auto">
-    <script>
-      // Pretty URL for home page
-      if (window.location.pathname.endsWith('index.html')) {
-        const prettyUrl = window.location.pathname.replace('index.html', '');
-        history.replaceState(null, '', prettyUrl);
-      }
-    </script>
     <div data-component="header"></div>
     <main>
       <div data-component="live-matches"></div>
@@ -305,12 +305,12 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
   <!-- Components -->
-  <script src="components_js/header.js"></script>
-  <script src="components_js/live-matches.js"></script>
-  <script src="components_js/footer.js"></script>
-  <script src="components_js/modals.js"></script>
+  <script src="components/header.js"></script>
+  <script src="components/live-matches.js"></script>
+  <script src="components/footer.js"></script>
+  <script src="components/modals.js"></script>
   <!-- Main Logic -->
-  <script src="script.js"></script>
+  <script src="js/script.js"></script>
 </body>
 
 </html>

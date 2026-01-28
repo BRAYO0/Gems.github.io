@@ -8,8 +8,25 @@
     <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
     <script type="text/javascript"
         src="//cdn.jsdelivr.net/gh/ewwink/clappr-quality-selector-plugin@latest/quality-selector.js"></script>
-    <link rel="icon" type="image/png" href="app_icon.png">
+    <link rel="icon" type="image/png" href="assets/images/app_icon.png">
     <link href="https://api.fontshare.com/v2/css?f[]=chillax@400&display=swap" rel="stylesheet">
+    <script>
+        // Immediate URL rewrite for player page
+        (function () {
+            const storedMatch = sessionStorage.getItem('active_match');
+            if (storedMatch && window.location.protocol !== 'file:') {
+                try {
+                    const data = JSON.parse(storedMatch);
+                    const matchTitle = data.title || 'Match';
+                    const urlType = data.type || 'match';
+                    const slug = matchTitle.replace(/\s+/g, '-');
+                    history.replaceState(null, '', `${urlType}/${slug}`);
+                } catch (e) {
+                    console.error("Failed to parse stored match:", e);
+                }
+            }
+        })();
+    </script>
     <style>
         body,
         html {
@@ -136,16 +153,6 @@
 
                     // Update Title
                     document.title = `Stream11 - Watching ${matchTitle}`;
-
-                    // Visual Obfuscation: Change URL in address bar to something pretty
-                    // Note: We use the title for the slug. 
-                    // To prevent relative path breakage, we only change the filename if not on file://
-                    if (window.location.protocol !== 'file:') {
-                        const slug = matchTitle.replace(/\s+/g, '-');
-                        // Use a relative-looking path that doesn't actually change depth if possible, 
-                        // or just accept the depth change and fix the back button.
-                        history.replaceState(null, '', `highlight/${slug}`);
-                    }
 
                 } catch (e) {
                     console.error("Failed to parse stored match:", e);

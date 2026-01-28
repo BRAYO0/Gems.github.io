@@ -5,7 +5,7 @@ window.COMPONENTS['header'] = `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
             <div class="flex items-center cursor-pointer relative" onclick="window.location.href='index.html'" style="min-width: 280px;">
-                <img src="app_icon.png" alt="Logo" class="w-24 h-24 object-contain absolute left-0" style="top: 50%; transform: translateY(-50%);">
+                <img src="assets/images/app_icon.png" alt="Logo" class="w-24 h-24 object-contain absolute left-0" style="top: 50%; transform: translateY(-50%);">
                 <div class="ml-24">
                     <h1 id="site-title" class="text-xl sm:text-2xl font-bold neon-text leading-tight">Stream11</h1>
                     <p id="tagline" class="text-xs text-gray-400 hidden md:block">Live Football Streaming &amp; Scores</p>

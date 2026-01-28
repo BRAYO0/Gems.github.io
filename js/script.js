@@ -427,7 +427,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 window.handleWatchClick = async function (id) {
   let match = typeof allMatches !== 'undefined' ? allMatches.find(m => m.id === id) : null;
-  if (!match && typeof allHighlights !== 'undefined') match = allHighlights.find(m => m.id === id);
+  let isHighlight = false;
+
+  if (!match && typeof allHighlights !== 'undefined') {
+    match = allHighlights.find(m => m.id === id);
+    isHighlight = true;
+  }
+
   if (!match) return;
 
   const returnUrl = window.location.href;
@@ -435,12 +441,14 @@ window.handleWatchClick = async function (id) {
   const awayName = (match.away_team?.name || match.away?.name || 'Away').trim();
   const matchTitle = `${homeName} vs ${awayName}`;
   const slug = matchTitle.replace(/\s+/g, '-');
+  const urlType = isHighlight ? 'highlight' : 'match';
 
   const goToPlayer = (streams) => {
     sessionStorage.setItem('active_match', JSON.stringify({
       title: matchTitle,
       streams: streams,
-      returnTo: returnUrl
+      returnTo: returnUrl,
+      type: urlType
     }));
     window.location.href = `player.html?watch=${encodeURIComponent(slug)}`;
   };
