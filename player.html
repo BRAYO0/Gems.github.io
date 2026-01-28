@@ -251,6 +251,9 @@
                 console.log(`Loading Stream ${index + 1}:`, videoUrl);
                 console.log("Headers:", customHeaders);
 
+                // Detect mobile device
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
                 player = new Clappr.Player({
                     source: videoUrl,
                     parentId: "#player",
@@ -264,6 +267,12 @@
                             return playbackLevel.level.height + 'p';
                         }
                     },
+                    // Disable click-to-play on mobile
+                    clickToPlay: !isMobile,
+                    mediaControl: {
+                        seekbar: "#00ff87",
+                        buttons: "#ffffff"
+                    },
                     playback: {
                         hlsjsConfig: {
                             xhrSetup: function (xhr, url) {
@@ -276,6 +285,23 @@
                         }
                     }
                 });
+
+                // Force landscape orientation on mobile fullscreen
+                if (isMobile) {
+                    player.on(Clappr.Events.PLAYER_FULLSCREEN, function () {
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(err => {
+                                console.log('Orientation lock failed:', err);
+                            });
+                        }
+                    });
+
+                    player.on(Clappr.Events.PLAYER_EXIT_FULLSCREEN, function () {
+                        if (screen.orientation && screen.orientation.unlock) {
+                            screen.orientation.unlock();
+                        }
+                    });
+                }
             }
 
             // Start with first stream
