@@ -269,6 +269,8 @@
                     },
                     // Disable click-to-play on mobile
                     clickToPlay: !isMobile,
+                    // Enable fullscreen on mobile
+                    allowUserInteraction: true,
                     mediaControl: {
                         seekbar: "#00ff87",
                         buttons: "#ffffff"
@@ -289,16 +291,31 @@
                 // Force landscape orientation on mobile fullscreen
                 if (isMobile) {
                     player.on(Clappr.Events.PLAYER_FULLSCREEN, function () {
-                        if (screen.orientation && screen.orientation.lock) {
-                            screen.orientation.lock('landscape').catch(err => {
-                                console.log('Orientation lock failed:', err);
-                            });
-                        }
+                        // Small delay to ensure fullscreen is established first
+                        setTimeout(() => {
+                            if (screen.orientation && screen.orientation.lock) {
+                                screen.orientation.lock('landscape').catch(err => {
+                                    console.log('Orientation lock not supported or failed:', err);
+                                });
+                            } else if (screen.lockOrientation) {
+                                screen.lockOrientation('landscape');
+                            } else if (screen.mozLockOrientation) {
+                                screen.mozLockOrientation('landscape');
+                            } else if (screen.msLockOrientation) {
+                                screen.msLockOrientation('landscape');
+                            }
+                        }, 100);
                     });
 
                     player.on(Clappr.Events.PLAYER_EXIT_FULLSCREEN, function () {
                         if (screen.orientation && screen.orientation.unlock) {
                             screen.orientation.unlock();
+                        } else if (screen.unlockOrientation) {
+                            screen.unlockOrientation();
+                        } else if (screen.mozUnlockOrientation) {
+                            screen.mozUnlockOrientation();
+                        } else if (screen.msUnlockOrientation) {
+                            screen.msUnlockOrientation();
                         }
                     });
                 }
