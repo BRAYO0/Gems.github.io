@@ -87,13 +87,32 @@ async function fetchMatches(isUpdate = false) {
 
   // Fetch fresh data in background
   try {
-    const [matchesData, scoresData] = await Promise.all([
-      fetch(API_ENDPOINTS.matches).then(r => r.ok ? r.json() : []),
-      fetch(API_ENDPOINTS.scores).then(r => r.ok ? r.json() : [])
-    ]).catch(e => {
+    const promises = [];
+
+    // Optimized: Only fetch static matches if not in memory or forced update (rare)
+    // We treat "isUpdate" as "live update loop", which shouldn't re-fetch static schedule
+    if (!window.cachedMatchSchedule || !window.cachedMatchSchedule.length) {
+      console.log("Fetching full match schedule...");
+      promises.push(fetch(API_ENDPOINTS.matches).then(r => r.ok ? r.json() : []));
+    } else {
+      promises.push(Promise.resolve(window.cachedMatchSchedule));
+    }
+
+    // Always fetch live scores
+    promises.push(fetch(API_ENDPOINTS.scores).then(r => r.ok ? r.json() : []));
+
+    const [matchesData, scoresData] = await Promise.all(promises).catch(e => {
       console.error("Fetch error:", e);
       return [[], []];
     });
+
+    if (matchesData.length > 0) {
+      // Update memory cache
+      window.cachedMatchSchedule = matchesData;
+    } else if (window.cachedMatchSchedule) {
+      // Fallback to cache if fetch failed
+      matchesData.push(...window.cachedMatchSchedule);
+    }
 
     if (matchesData.length === 0) {
       throw new Error('No match data available');
