@@ -87,36 +87,38 @@ async function fetchMatches(isUpdate = false) {
 
   // Fetch fresh data in background
   try {
-    const promises = [];
+    let matchesData = [];
+    let scoresData = [];
 
-    // Optimized: Only fetch static matches if not in memory or forced update (rare)
-    // We treat "isUpdate" as "live update loop", which shouldn't re-fetch static schedule
+    // 1. Get Matches (Fetch or check cache)
     if (!window.cachedMatchSchedule || !window.cachedMatchSchedule.length) {
       console.log("Fetching full match schedule...");
-      promises.push(fetch(API_ENDPOINTS.matches).then(r => r.ok ? r.json() : []));
+      const r = await fetch(API_ENDPOINTS.matches);
+      matchesData = r.ok ? await r.json() : [];
     } else {
-      promises.push(Promise.resolve(window.cachedMatchSchedule));
+      matchesData = window.cachedMatchSchedule;
     }
 
-    // Always fetch live scores
-    promises.push(fetch(API_ENDPOINTS.scores).then(r => r.ok ? r.json() : []));
-
-    const [matchesData, scoresData] = await Promise.all(promises).catch(e => {
-      console.error("Fetch error:", e);
-      return [[], []];
-    });
-
     if (matchesData.length > 0) {
-      // Update memory cache
       window.cachedMatchSchedule = matchesData;
     } else if (window.cachedMatchSchedule) {
-      // Fallback to cache if fetch failed
-      matchesData.push(...window.cachedMatchSchedule);
+      matchesData = window.cachedMatchSchedule;
     }
 
     if (matchesData.length === 0) {
       throw new Error('No match data available');
     }
+
+    // 2. Fetch Scores using date from matches
+    const matchDate = matchesData[0]?.date;
+    let scoresUrl = API_ENDPOINTS.scores;
+
+    if (matchDate) {
+      scoresUrl = `${API_ENDPOINTS.scores}/date/${matchDate}`;
+    }
+
+    const rScore = await fetch(scoresUrl);
+    scoresData = rScore.ok ? await rScore.json() : [];
 
     const scoresMap = new Map();
     scoresData.forEach(s => {
@@ -218,11 +220,66 @@ async function fetchMatches(isUpdate = false) {
       CacheManager.set('live_matches', mergedMatches, CacheManager.TTL.MATCHES);
     }
 
+    // --- Smart Polling Logic ---
+    let nextPollDelay = 10000; // Default: 10 seconds for live matches
+    let shouldPoll = true;
+
+    // Helper to check status
+    const getStatus = (m) => m.time_period || '';
+    const isFinished = (m) => {
+      const s = getStatus(m);
+      return s === 'FT' || s === 'Full time' || s === 'Finished' || s === 'Postponed' || s === 'Cancelled';
+    };
+    const isLive = (m) => {
+      const s = getStatus(m);
+      return !isFinished(m) && (s.includes("'") || s.includes("Live") || s.includes("Half") || s.includes("HT"));
+    };
+
+    const anyLive = mergedMatches.some(isLive);
+    const allFinished = mergedMatches.every(isFinished);
+    const upcoming = mergedMatches.filter(m => !isLive(m) && !isFinished(m));
+
+    if (allFinished && mergedMatches.length > 0) {
+      console.log('All matches finished. specific polling stopped.');
+      shouldPoll = false;
+    } else if (!anyLive && upcoming.length > 0) {
+      // No live matches, check when the next one starts
+      const now = new Date();
+      // Sort by soonest
+      const sortedUpcoming = upcoming.sort((a, b) => {
+        const da = a.kickoffDate ? new Date(a.kickoffDate) : new Date(8640000000000000);
+        const db = b.kickoffDate ? new Date(b.kickoffDate) : new Date(8640000000000000);
+        return da - db;
+      });
+
+      const nextMatch = sortedUpcoming[0];
+      if (nextMatch && nextMatch.kickoffDate) {
+        const diff = nextMatch.kickoffDate - now;
+        // Buffer: Start polling 5 minutes before kickoff
+        const buffer = 5 * 60 * 1000;
+        const wakeUpDelay = diff - buffer;
+
+        if (wakeUpDelay > 10000) {
+          nextPollDelay = wakeUpDelay;
+          console.log(`No live matches. Next match at ${nextMatch.kickoffDate.toLocaleTimeString()}. Sleeping for ${(wakeUpDelay / 60000).toFixed(1)} mins.`);
+        }
+      }
+    }
+
+    // Schedule next poll
+    if (shouldPoll) {
+      if (window.matchUpdateTimeout) clearTimeout(window.matchUpdateTimeout);
+      window.matchUpdateTimeout = setTimeout(() => fetchMatches(true), nextPollDelay);
+    }
+
   } catch (error) {
     console.error('Error fetching matches:', error);
     if (!cachedMatches && container) {
       container.innerHTML = '<div class="placeholder-text">Unable to load matches at this time.</div>';
     }
+    // Retry on error after standard delay
+    if (window.matchUpdateTimeout) clearTimeout(window.matchUpdateTimeout);
+    window.matchUpdateTimeout = setTimeout(() => fetchMatches(true), 15000);
   } finally {
     window.isUpdating = false;
   }
@@ -634,7 +691,7 @@ function initApp() {
   if (matchesContainer) {
     setTimeout(() => {
       fetchMatches();
-      setInterval(() => fetchMatches(true), 10000);
+      // Polling is now handled internally by fetchMatches
     }, 1000);
   }
 }
